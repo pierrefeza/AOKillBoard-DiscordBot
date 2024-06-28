@@ -16,6 +16,7 @@ const client = new Client({
 
 var lastRecordedKill = -1;
 var playerNames = config.players.map(player => player.toLowerCase());
+var eventColor = 0x008000;
 
 async function fetchKills(limit = 51, offset = 0, retries = 3) {
     try {
@@ -77,7 +78,11 @@ async function generateCompositeImage(kill) {
 
     const killer = kill.Killer;
     const victim = kill.Victim;
-
+    if(kill.Victim.AllianceName.toLowerCase() === config.allianceName.toLowerCase() 
+        || kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase()
+    || playerNames.includes(kill.Killer.Name.toLowerCase()) || playerNames.includes(kill.Victim.Name.toLowerCase())
+    ){
+    eventColor = 880808;}
     // Alliance and Guild Names
     ctx.fillStyle = '#FFF';
     ctx.font = '24px Arial'; // half the size of the player name
@@ -220,24 +225,36 @@ async function generateCompositeImage(kill) {
 }
 
 async function generateInventoryImage(victim) {
-    const canvas = createCanvas(1200, 150); // Adjust height as needed
+    const iconSize = 100; // Adjust size as needed
+    const padding = 5; // Padding between items
+    const marginLeft = 10; // Left margin
+    const marginTop = 10; // Top margin
+
+    // Calculate the number of items per row based on canvas width
+    const itemsPerRow = Math.floor((1200 - 2 * marginLeft + padding) / (iconSize + padding));
+    const rows = Math.ceil(victim.Inventory.length / itemsPerRow);
+
+    // Adjust canvas height based on the number of rows
+    const canvas = createCanvas(1200, rows * (iconSize + padding) + 2 * marginTop);
     const ctx = canvas.getContext('2d');
 
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const iconSize = 100; // Adjust size as needed
-    const positions = [
-        { x: 45, y: 25 }, { x: 145, y: 25 }, { x: 245, y: 25 }, { x: 345, y: 25 }, 
-        { x: 445, y: 25 }, { x: 545, y: 25 }, { x: 645, y: 25 }, { x: 745, y: 25 },
-        { x: 845, y: 25 }, { x: 945, y: 25 }, { x: 1045, y: 25 }, { x: 1145, y: 25 }
-    ];
+    let currentX = marginLeft;
+    let currentY = marginTop;
 
-    for (let i = 0; i < victim.Inventory.length && i < positions.length; i++) {
+    for (let i = 0; i < victim.Inventory.length; i++) {
         const item = victim.Inventory[i];
         if (item) {
             const itemImg = await loadImage(await downloadImage(getEquipmentImageUrl(item)));
-            ctx.drawImage(itemImg, positions[i].x, positions[i].y, iconSize, iconSize);
+            ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
+
+            currentX += iconSize + padding;
+            if ((i + 1) % itemsPerRow === 0) {
+                currentX = marginLeft;
+                currentY += iconSize + padding;
+            }
         }
     }
 
@@ -258,7 +275,7 @@ async function postKill(kill, channel = config.botChannel) {
     inventoryPath = await generateInventoryImage(kill.Victim);}
 
     var embed = {
-        color: 0x008000,
+        color: eventColor,
         author: {
             name: kill.Killer.Name + " killed " + kill.Victim.Name,
             icon_url: 'https://albiononline.com/assets/images/killboard/kill__date.png',
@@ -284,9 +301,9 @@ async function postKill(kill, channel = config.botChannel) {
     discordChannel.send({ embeds: [embed], files: [{ attachment: filePath, name: 'kill.png' }] }).then(() => {
         fs.unlinkSync(filePath);
     }).catch(console.error);
-    if(inventoryPath != null){
+    if(kill.Victim.Inventory.length > 0){
     const inventoryEmbed = {
-        color: 0xFFA500,
+        color: eventColor,
         image: {
             url: 'attachment://inventory.png'
         }
