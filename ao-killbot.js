@@ -78,11 +78,6 @@ async function generateCompositeImage(kill) {
 
     const killer = kill.Killer;
     const victim = kill.Victim;
-    if(kill.Victim.AllianceName.toLowerCase() === config.allianceName.toLowerCase() 
-        || kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase()
-        || playerNames.includes(kill.Victim.Name.toLowerCase())) {
-        eventColor = 0x880808; // Red color
-    }
     
     // Alliance and Guild Names
     ctx.fillStyle = '#FFF';
@@ -296,13 +291,22 @@ async function postKill(kill, channel = config.botChannel) {
         return;
     }
 
-    const filePath = await generateCompositeImage(kill);
+    // Determine the color for the event
+    let eventColor = 0x008000; // Default green color
+    if (kill.Victim.AllianceName.toLowerCase() === config.allianceName.toLowerCase() ||
+        kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase() ||
+        playerNames.includes(kill.Victim.Name.toLowerCase())) {
+        eventColor = 0x880808; // Red color
+    }
+
     let inventoryPath = null;
+    const filePath = await generateCompositeImage(kill);
     if (kill.Victim.Inventory.some(item => item !== null)) {
         inventoryPath = await generateInventoryImage(kill.Victim);
     }
 
-    var embed = {
+    // Create and send kill embed
+    const embed = {
         color: eventColor,
         author: {
             name: kill.Killer.Name + " killed " + kill.Victim.Name,
