@@ -16,7 +16,7 @@ const client = new Client({
 
 var lastRecordedKill = -1;
 var playerNames = config.players.map(player => player.toLowerCase());
-var eventColor = 0x008000;
+var eventColor = 0x008000; // Green color by default
 
 async function fetchKills(limit = 51, offset = 0, retries = 3) {
     try {
@@ -80,9 +80,10 @@ async function generateCompositeImage(kill) {
     const victim = kill.Victim;
     if(kill.Victim.AllianceName.toLowerCase() === config.allianceName.toLowerCase() 
         || kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase()
-    || playerNames.includes(kill.Killer.Name.toLowerCase()) || playerNames.includes(kill.Victim.Name.toLowerCase())
-    ){
-    eventColor = 880808;}
+        || playerNames.includes(kill.Victim.Name.toLowerCase())) {
+        eventColor = 0x880808; // Red color
+    }
+    
     // Alliance and Guild Names
     ctx.fillStyle = '#FFF';
     ctx.font = '24px Arial'; // half the size of the player name
