@@ -294,10 +294,12 @@ async function postKill(kill, channel = config.botChannel) {
     if (kill.TotalVictimKillFame === 0) {
         return;
     }
-    let inventoryPath = null;
+
     const filePath = await generateCompositeImage(kill);
-    if(kill.Victim.Inventory.some(item => item !== null)){
-    inventoryPath = await generateInventoryImage(kill.Victim);}
+    let inventoryPath = null;
+    if (kill.Victim.Inventory.some(item => item !== null)) {
+        inventoryPath = await generateInventoryImage(kill.Victim);
+    }
 
     var embed = {
         color: eventColor,
@@ -320,21 +322,29 @@ async function postKill(kill, channel = config.botChannel) {
         return;
     }
 
-    discordChannel.send({ embeds: [embed], files: [{ attachment: filePath, name: 'kill.png' }] }).then(() => {
-        fs.unlinkSync(filePath);
-    }).catch(console.error);
-    if(inventoryPath != null){
-    const inventoryEmbed = {
-        color: eventColor,
-        image: {
-            url: 'attachment://inventory.png'
-        }
-    };
+    // Send the kill image first
+    discordChannel.send({ embeds: [embed], files: [{ attachment: filePath, name: 'kill.png' }] })
+        .then(() => {
+            fs.unlinkSync(filePath);
+            // If there's an inventory image, send it next
+            if (inventoryPath !== null) {
+                const inventoryEmbed = {
+                    color: eventColor,
+                    image: {
+                        url: 'attachment://inventory.png'
+                    }
+                };
 
-    discordChannel.send({ embeds: [inventoryEmbed], files: [{ attachment: inventoryPath, name: 'inventory.png' }] }).then(() => {
-        fs.unlinkSync(inventoryPath);
-    }).catch(console.error);}
+                discordChannel.send({ embeds: [inventoryEmbed], files: [{ attachment: inventoryPath, name: 'inventory.png' }] })
+                    .then(() => {
+                        fs.unlinkSync(inventoryPath);
+                    })
+                    .catch(console.error);
+            }
+        })
+        .catch(console.error);
 }
+
 
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
