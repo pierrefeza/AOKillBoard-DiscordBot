@@ -86,19 +86,29 @@ async function generateCompositeImage(kill) {
     ctx.fillText(`[${victim.AllianceName}] ${victim.GuildName}`, 950, 30);
 
     // Timestamp Icon and Timestamp
-    const timestampIcon = await loadImage(await downloadImage('https://i.imgur.com/AptJGHR.png'));
-    const timestampIconSize = 50;
-    ctx.font = '12px Arial'; 
-    ctx.drawImage(timestampIcon, 565, 10, timestampIconSize, timestampIconSize);
-    ctx.fillText(new Date(kill.TimeStamp).toLocaleString(), 600, 75);
+    const timestampIcon = await loadImage(await downloadImage('https://render.albiononline.com/v1/spell/SUMMONER_CD_REDUCTION.png'));
+    const timestampIconSize = 70;
+    ctx.font = '16px Arial'; 
+    ctx.drawImage(timestampIcon, 565, 20, timestampIconSize, timestampIconSize);
+    ctx.fillText(new Date(kill.TimeStamp).toLocaleString(), 600, 105);
+
+    // Participants Icon and Count
+    if (kill.Participants.length > 1) {
+        const participantsIcon = await loadImage(await downloadImage('https://cdn.albiononline2d.com/game-images/INFO_ICON_PARTYFINDER.png'));
+        const participantsIconSize = 70;
+        const participantsY = 250; // Position it below the timestamp with a 10px gap
+        ctx.drawImage(participantsIcon, 565, participantsY, participantsIconSize, participantsIconSize);
+        ctx.font = '24px Arial';
+        ctx.fillText(`${kill.Participants.length}`, 600, participantsY + participantsIconSize + 20);
+    }
 
     // Fame Icon and Fame Text
     const fameIcon = await loadImage(await downloadImage('https://i.imgur.com/geal9ri.png'));
     const fameIconSize = 50;
     const fameY = canvas.height / 2 - 15; // Center of the image
-    ctx.drawImage(fameIcon, 565, fameY - fameIconSize - 5, fameIconSize, fameIconSize); // Position the icon above the text
-    ctx.font = '36px Arial'; // 20% bigger than the IP section
-    ctx.fillText(`Fame: ${dFormatter(kill.TotalVictimKillFame)}`, 600, fameY);
+    ctx.drawImage(fameIcon, 570, fameY - fameIconSize - 5, fameIconSize, fameIconSize); // Position the icon above the text
+    ctx.font = '24px Arial'; 
+    ctx.fillText(`${dFormatter(kill.TotalVictimKillFame)}`, 600, fameY + 20);
 
     // Player Names
     ctx.font = '36px Arial'; // 20% bigger than the IP section
