@@ -56,7 +56,7 @@ function parseKills(events) {
 }
 
 function getEquipmentImageUrl(equipment) {
-    return equipment && equipment.Type ? `https://render.albiononline.com/v1/item/${equipment.Type}.png` : 'https://albiononline.com/assets/images/killboard/kill__date.png';
+    return equipment && equipment.Type ? `https://render.albiononline.com/v1/item/${equipment.Type}.png?count=${equipment.Count}&quality=${equipment.Quality}` : 'https://albiononline.com/assets/images/killboard/kill__date.png';
 }
 
 function truncateText(text, maxLength) {
@@ -83,13 +83,26 @@ async function generateCompositeImage(kill) {
     ctx.font = '24px Arial'; // half the size of the player name
     ctx.textAlign = 'center';
     ctx.fillText(`[${killer.AllianceName}] ${killer.GuildName}`, 250, 30);
-    ctx.fillText(new Date(kill.TimeStamp).toLocaleString(), 600, 30);
     ctx.fillText(`[${victim.AllianceName}] ${victim.GuildName}`, 950, 30);
+
+    // Timestamp Icon and Timestamp
+    const timestampIcon = await loadImage(await downloadImage('https://i.imgur.com/AptJGHR.png'));
+    const timestampIconSize = 50;
+    ctx.font = '12px Arial'; 
+    ctx.drawImage(timestampIcon, 565, 10, timestampIconSize, timestampIconSize);
+    ctx.fillText(new Date(kill.TimeStamp).toLocaleString(), 600, 75);
+
+    // Fame Icon and Fame Text
+    const fameIcon = await loadImage(await downloadImage('https://i.imgur.com/geal9ri.png'));
+    const fameIconSize = 50;
+    const fameY = canvas.height / 2 - 15; // Center of the image
+    ctx.drawImage(fameIcon, 565, fameY - fameIconSize - 5, fameIconSize, fameIconSize); // Position the icon above the text
+    ctx.font = '36px Arial'; // 20% bigger than the IP section
+    ctx.fillText(`Fame: ${dFormatter(kill.TotalVictimKillFame)}`, 600, fameY);
 
     // Player Names
     ctx.font = '36px Arial'; // 20% bigger than the IP section
     ctx.fillText(killer.Name, 250, 70);
-    ctx.fillText(`Fame: ${dFormatter(kill.TotalVictimKillFame)}`, 600, 70);
     ctx.fillText(victim.Name, 950, 70);
 
     // IP Section
@@ -102,12 +115,12 @@ async function generateCompositeImage(kill) {
     const iconSize = (gridWidth / 3) * 0.85;
 
     const positions = [
-        { x: 5, y: 125 }, { x: 5 + iconSize, y: 125 }, { x: 5 + 2 * iconSize, y: 125 },
-        { x: 5, y: 125 + iconSize }, { x: 5 + iconSize, y: 125 + iconSize }, { x: 5 + 2 * iconSize, y: 125 + iconSize },
-        { x: 5, y: 125 + 2 * iconSize }, { x: 5 + iconSize, y: 125 + 2 * iconSize }, { x: 5 + 2 * iconSize, y: 125 + 2 * iconSize },
-        { x: 5 + iconSize, y: 125 + 3 * iconSize }
+        { x: 45, y: 125 }, { x: 45 + iconSize, y: 125 }, { x: 45 + 2 * iconSize, y: 125 },
+        { x: 45, y: 125 + iconSize }, { x: 45 + iconSize, y: 125 + iconSize }, { x: 45 + 2 * iconSize, y: 125 + iconSize },
+        { x: 45, y: 125 + 2 * iconSize }, { x: 45 + iconSize, y: 125 + 2 * iconSize }, { x: 45 + 2 * iconSize, y: 125 + 2 * iconSize },
+        { x: 45 + iconSize, y: 125 + 3 * iconSize }
     ];
-    const victimPositions = positions.map(pos => ({ x: canvas.width - 5 - iconSize * (3 - pos.x / iconSize), y: pos.y }));
+    const victimPositions = positions.map(pos => ({ x: canvas.width - 75 - iconSize * (3 - pos.x / iconSize), y: pos.y }));
 
     for (let i = 0; i < equipmentTypes.length; i++) {
         const type = equipmentTypes[i];
