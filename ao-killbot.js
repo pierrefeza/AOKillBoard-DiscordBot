@@ -123,29 +123,57 @@ async function generateCompositeImage(kill) {
         }
     }
 
-    // Draw damage bar
-    const totalDamage = kill.Participants.reduce((total, p) => total + p.DamageDone, 0);
-    if (totalDamage > 0) {
-        const barWidth = 1000;
-        const barHeight = 30;
-        let startX = 100;
-        const barY = 700; // Adjusted y-position
+    // Draw Damage Bar
+    const totalDamage = kill.Participants.reduce((sum, participant) => sum + participant.DamageDone, 0);
+    const barWidth = canvas.width - 10;
+    const barHeight = 20;
+    const barX = 5;
+    const barY = positions[positions.length - 1].y + iconSize + 10;
+    let currentX = barX;
 
-        kill.Participants.forEach((participant, index) => {
-            if (participant.DamageDone > 0) {
-                const damagePercent = participant.DamageDone / totalDamage;
-                const segmentWidth = barWidth * damagePercent;
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
 
-                ctx.fillStyle = `hsl(${index * 50}, 100%, 50%)`; // Unique color per participant
-                ctx.fillRect(startX, barY, segmentWidth, barHeight); // Adjusted y-position
+    const participantColors = {};
 
-                ctx.fillStyle = '#FFF';
-                ctx.font = '15px Arial';
-                ctx.fillText(`${participant.Name} [${Math.round(participant.DamageDone)}]`, startX + segmentWidth / 2, barY + barHeight + 20); // Adjusted y-position
+    for (const participant of kill.Participants) {
+        if (participant.DamageDone === 0) continue;
 
-                startX += segmentWidth;
-            }
-        });
+        const damagePercentage = participant.DamageDone / totalDamage;
+        const participantWidth = barWidth * damagePercentage;
+
+        const color = getRandomColor();
+        participantColors[participant.Name] = color;
+
+        ctx.fillStyle = color;
+        ctx.fillRect(currentX, barY, participantWidth, barHeight);
+
+        ctx.fillStyle = '#FFF';
+        ctx.fillText(`${Math.round(damagePercentage * 100)}%`, currentX + participantWidth / 2, barY + barHeight / 1.5);
+
+        currentX += participantWidth;
+    }
+
+    // Draw Player Damage Text and Colored Boxes
+    let textX = barX;
+    const textY = barY + barHeight + 25;
+    const boxSize = 15;
+    const textPadding = 5;
+
+    for (const participant of kill.Participants) {
+        if (participant.DamageDone === 0) continue;
+
+        const damageText = `${participant.Name} [${Math.round(participant.DamageDone)}]`;
+        const textWidth = ctx.measureText(damageText).width;
+
+        ctx.fillStyle = participantColors[participant.Name];
+        ctx.fillRect(textX, textY - boxSize, boxSize, boxSize);
+
+        ctx.fillStyle = '#FFF';
+        ctx.textAlign = 'left';
+        ctx.fillText(damageText, textX + boxSize + textPadding, textY);
+
+        textX += boxSize + textWidth + 2 * textPadding;
     }
 
     const filePath = path.join(__dirname, `kill-${Date.now()}.png`);
@@ -246,4 +274,13 @@ client.login(config.token);
 
 function dFormatter(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") || 0;
+}
+
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
 }
