@@ -96,7 +96,7 @@ async function generateCompositeImage(kill) {
     if (kill.Participants.length > 1) {
         const participantsIcon = await loadImage(await downloadImage('https://cdn.albiononline2d.com/game-images/INFO_ICON_PARTYFINDER.png'));
         const participantsIconSize = 70;
-        const participantsY = 250; // Position it below the timestamp with a 10px gap
+        const participantsY = 200; // Position it below the timestamp with a 10px gap
         ctx.drawImage(participantsIcon, 565, participantsY, participantsIconSize, participantsIconSize);
         ctx.font = '24px Arial';
         ctx.fillText(`${kill.Participants.length}`, 600, participantsY + participantsIconSize + 20);
@@ -219,12 +219,43 @@ async function generateCompositeImage(kill) {
     return filePath;
 }
 
+async function generateInventoryImage(victim) {
+    const canvas = createCanvas(1200, 150); // Adjust height as needed
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const iconSize = 100; // Adjust size as needed
+    const positions = [
+        { x: 45, y: 25 }, { x: 145, y: 25 }, { x: 245, y: 25 }, { x: 345, y: 25 }, 
+        { x: 445, y: 25 }, { x: 545, y: 25 }, { x: 645, y: 25 }, { x: 745, y: 25 },
+        { x: 845, y: 25 }, { x: 945, y: 25 }, { x: 1045, y: 25 }, { x: 1145, y: 25 }
+    ];
+
+    for (let i = 0; i < victim.Inventory.length && i < positions.length; i++) {
+        const item = victim.Inventory[i];
+        if (item) {
+            const itemImg = await loadImage(await downloadImage(getEquipmentImageUrl(item)));
+            ctx.drawImage(itemImg, positions[i].x, positions[i].y, iconSize, iconSize);
+        }
+    }
+
+    const filePath = path.join(__dirname, `inventory-${Date.now()}.png`);
+    const buffer = canvas.toBuffer('image/png');
+    fs.writeFileSync(filePath, buffer);
+
+    return filePath;
+}
+
 async function postKill(kill, channel = config.botChannel) {
     if (kill.TotalVictimKillFame === 0) {
         return;
     }
-
+    let inventoryPath = null;
     const filePath = await generateCompositeImage(kill);
+    if(kill.Victim.Inventory > 0){
+    inventoryPath = await generateInventoryImage(kill.Victim);}
 
     var embed = {
         color: 0x008000,
@@ -253,6 +284,17 @@ async function postKill(kill, channel = config.botChannel) {
     discordChannel.send({ embeds: [embed], files: [{ attachment: filePath, name: 'kill.png' }] }).then(() => {
         fs.unlinkSync(filePath);
     }).catch(console.error);
+    if(inventoryPath != null){
+    const inventoryEmbed = {
+        color: 0xFFA500,
+        image: {
+            url: 'attachment://inventory.png'
+        }
+    };
+
+    discordChannel.send({ embeds: [inventoryEmbed], files: [{ attachment: inventoryPath, name: 'inventory.png' }] }).then(() => {
+        fs.unlinkSync(inventoryPath);
+    }).catch(console.error);}
 }
 
 client.once('ready', () => {
