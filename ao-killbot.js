@@ -99,7 +99,7 @@ async function generateCompositeImage(kill) {
 
     const equipmentTypes = ['Bag', 'Head', 'Cape', 'MainHand', 'Armor', 'OffHand', 'Potion', 'Shoes', 'Food', 'Mount'];
     const gridWidth = 0.42 * canvas.width;
-    const iconSize = (gridWidth / 3) * 0.95;
+    const iconSize = (gridWidth / 3) * 0.85;
 
     const positions = [
         { x: 5, y: 125 }, { x: 5 + iconSize, y: 125 }, { x: 5 + 2 * iconSize, y: 125 },
@@ -121,6 +121,30 @@ async function generateCompositeImage(kill) {
             const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victim.Equipment[type])));
             ctx.drawImage(victimImg, victimPositions[i].x, victimPositions[i].y, iconSize, iconSize);
         }
+    }
+
+    // Draw damage bar
+    const totalDamage = kill.Participants.reduce((total, p) => total + p.DamageDone, 0);
+    if (totalDamage > 0) {
+        const barWidth = 1000;
+        const barHeight = 30;
+        let startX = 100;
+
+        kill.Participants.forEach((participant, index) => {
+            if (participant.DamageDone > 0) {
+                const damagePercent = participant.DamageDone / totalDamage;
+                const segmentWidth = barWidth * damagePercent;
+
+                ctx.fillStyle = `hsl(${index * 50}, 100%, 50%)`; // Unique color per participant
+                ctx.fillRect(startX, 750, segmentWidth, barHeight); // Adjusted y-position
+
+                ctx.fillStyle = '#FFF';
+                ctx.font = '15px Arial';
+                ctx.fillText(`${participant.Name} [${Math.round(participant.DamageDone)}]`, startX + segmentWidth / 2, 740); // Adjusted y-position
+
+                startX += segmentWidth;
+            }
+        });
     }
 
     const filePath = path.join(__dirname, `kill-${Date.now()}.png`);
