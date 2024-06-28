@@ -129,6 +129,7 @@ async function generateCompositeImage(kill) {
         const barWidth = 1000;
         const barHeight = 30;
         let startX = 100;
+        const barY = 700; // Adjusted y-position
 
         kill.Participants.forEach((participant, index) => {
             if (participant.DamageDone > 0) {
@@ -136,11 +137,11 @@ async function generateCompositeImage(kill) {
                 const segmentWidth = barWidth * damagePercent;
 
                 ctx.fillStyle = `hsl(${index * 50}, 100%, 50%)`; // Unique color per participant
-                ctx.fillRect(startX, 750, segmentWidth, barHeight); // Adjusted y-position
+                ctx.fillRect(startX, barY, segmentWidth, barHeight); // Adjusted y-position
 
                 ctx.fillStyle = '#FFF';
                 ctx.font = '15px Arial';
-                ctx.fillText(`${participant.Name} [${Math.round(participant.DamageDone)}]`, startX + segmentWidth / 2, 740); // Adjusted y-position
+                ctx.fillText(`${participant.Name} [${Math.round(participant.DamageDone)}]`, startX + segmentWidth / 2, barY + barHeight + 20); // Adjusted y-position
 
                 startX += segmentWidth;
             }
