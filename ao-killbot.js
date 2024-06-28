@@ -9,8 +9,11 @@
 const config = require('./config.json');
 
 // Require modules
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, AttachmentBuilder } = require('discord.js');
 const axios = require('axios');
+const { createCanvas, loadImage } = require('canvas');
+const fs = require('fs');
+const path = require('path');
 
 const client = new Client({
     intents: [
@@ -69,6 +72,41 @@ function truncateText(text, maxLength) {
     return text.length > maxLength ? text.substring(0, maxLength - 3) + '...' : text;
 }
 
+async function downloadImage(url) {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    return response.data;
+}
+
+async function generateCompositeImage(killerItem, victimItem) {
+    const canvas = createCanvas(800, 600);
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const equipmentTypes = ['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes', 'Cape', 'Bag', 'Mount', 'Potion', 'Food'];
+
+    for (let i = 0; i < equipmentTypes.length; i++) {
+        const type = equipmentTypes[i];
+
+        if (killerItem[type]) {
+            const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killerItem[type])));
+            ctx.drawImage(killerImg, 50, i * 50, 50, 50);
+        }
+
+        if (victimItem[type]) {
+            const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victimItem[type])));
+            ctx.drawImage(victimImg, 150, i * 50, 50, 50);
+        }
+    }
+
+    const filePath = path.join(__dirname, `kill-${Date.now()}.png`);
+    const buffer = canvas.toBuffer('image/png');
+    fs.writeFileSync(filePath, buffer);
+
+    return filePath;
+}
+
 async function postKill(kill, channel = config.botChannel) {
     if (kill.TotalVictimKillFame === 0) {
         return;
@@ -89,17 +127,6 @@ async function postKill(kill, channel = config.botChannel) {
 **Guild:** ${kill.Killer.GuildName || 'None'}
 **Alliance:** ${kill.Killer.AllianceName || 'None'}
 **Item Power:** ${Math.round(kill.Killer.AverageItemPower)}
-**Equipment:**
-- **MainHand:** [${killerItem.MainHand ? killerItem.MainHand.Type : 'None'}](${getEquipmentImageUrl(killerItem.MainHand)})
-- **OffHand:** [${killerItem.OffHand ? killerItem.OffHand.Type : 'None'}](${getEquipmentImageUrl(killerItem.OffHand)})
-- **Head:** [${killerItem.Head ? killerItem.Head.Type : 'None'}](${getEquipmentImageUrl(killerItem.Head)})
-- **Armor:** [${killerItem.Armor ? killerItem.Armor.Type : 'None'}](${getEquipmentImageUrl(killerItem.Armor)})
-- **Shoes:** [${killerItem.Shoes ? killerItem.Shoes.Type : 'None'}](${getEquipmentImageUrl(killerItem.Shoes)})
-- **Cape:** [${killerItem.Cape ? killerItem.Cape.Type : 'None'}](${getEquipmentImageUrl(killerItem.Cape)})
-- **Bag:** [${killerItem.Bag ? killerItem.Bag.Type : 'None'}](${getEquipmentImageUrl(killerItem.Bag)})
-- **Mount:** [${killerItem.Mount ? killerItem.Mount.Type : 'None'}](${getEquipmentImageUrl(killerItem.Mount)})
-- **Potion:** [${killerItem.Potion ? killerItem.Potion.Type : 'None'}](${getEquipmentImageUrl(killerItem.Potion)})
-- **Food:** [${killerItem.Food ? killerItem.Food.Type : 'None'}](${getEquipmentImageUrl(killerItem.Food)})
 `;
 
     var victimDetails = `
@@ -107,18 +134,9 @@ async function postKill(kill, channel = config.botChannel) {
 **Guild:** ${kill.Victim.GuildName || 'None'}
 **Alliance:** ${kill.Victim.AllianceName || 'None'}
 **Item Power:** ${Math.round(kill.Victim.AverageItemPower)}
-**Equipment:**
-- **MainHand:** [${victimItem.MainHand ? victimItem.MainHand.Type : 'None'}](${getEquipmentImageUrl(victimItem.MainHand)})
-- **OffHand:** [${victimItem.OffHand ? victimItem.OffHand.Type : 'None'}](${getEquipmentImageUrl(victimItem.OffHand)})
-- **Head:** [${victimItem.Head ? victimItem.Head.Type : 'None'}](${getEquipmentImageUrl(victimItem.Head)})
-- **Armor:** [${victimItem.Armor ? victimItem.Armor.Type : 'None'}](${getEquipmentImageUrl(victimItem.Armor)})
-- **Shoes:** [${victimItem.Shoes ? victimItem.Shoes.Type : 'None'}](${getEquipmentImageUrl(victimItem.Shoes)})
-- **Cape:** [${victimItem.Cape ? victimItem.Cape.Type : 'None'}](${getEquipmentImageUrl(victimItem.Cape)})
-- **Bag:** [${victimItem.Bag ? victimItem.Bag.Type : 'None'}](${getEquipmentImageUrl(victimItem.Bag)})
-- **Mount:** [${victimItem.Mount ? victimItem.Mount.Type : 'None'}](${getEquipmentImageUrl(victimItem.Mount)})
-- **Potion:** [${victimItem.Potion ? victimItem.Potion.Type : 'None'}](${getEquipmentImageUrl(victimItem.Potion)})
-- **Food:** [${victimItem.Food ? victimItem.Food.Type : 'None'}](${getEquipmentImageUrl(victimItem.Food)})
 `;
+
+    const filePath = await generateCompositeImage(killerItem, victimItem);
 
     var embed = {
         color: victory ? 0x008000 : 0x800000,
@@ -144,6 +162,9 @@ async function postKill(kill, channel = config.botChannel) {
                 inline: true
             }
         ],
+        image: {
+            url: 'attachment://kill.png'
+        },
         timestamp: new Date(kill.TimeStamp).toISOString(),
         footer: {
             text: "Kill #" + kill.EventId
@@ -156,7 +177,10 @@ async function postKill(kill, channel = config.botChannel) {
         return;
     }
 
-    discordChannel.send({ embeds: [embed] });
+    discordChannel.send({ embeds: [embed], files: [{ attachment: filePath, name: 'kill.png' }] }).then(() => {
+        // Delete the temporary file after the message is sent
+        fs.unlinkSync(filePath);
+    }).catch(console.error);
 }
 
 client.once('ready', () => {
