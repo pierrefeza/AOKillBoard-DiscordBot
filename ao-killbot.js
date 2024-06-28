@@ -278,11 +278,8 @@ async function postKill(kill, channel = config.botChannel) {
         color: eventColor,
         author: {
             name: kill.Killer.Name + " killed " + kill.Victim.Name,
-            icon_url: 'https://albiononline.com/assets/images/killboard/kill__date.png',
-            url: 'https://albiononline.com/en/killboard/kill/' + kill.EventId
+            url: 'https://albiononline.com/killboard/kill/' + kill.EventId
         },
-        title: "Kill Details",
-        description: `**Fame:** ${dFormatter(kill.TotalVictimKillFame)}`,
         image: {
             url: 'attachment://kill.png'
         },
