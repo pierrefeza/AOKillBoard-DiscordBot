@@ -230,9 +230,16 @@ async function generateInventoryImage(victim) {
     const marginLeft = 10; // Left margin
     const marginTop = 10; // Top margin
 
+    // Filter out null items
+    const inventoryItems = victim.Inventory.filter(item => item !== null);
+
+    if (inventoryItems.length === 0) {
+        return null; // No items to display
+    }
+
     // Calculate the number of items per row based on canvas width
     const itemsPerRow = Math.floor((1200 - 2 * marginLeft + padding) / (iconSize + padding));
-    const rows = Math.ceil(victim.Inventory.length / itemsPerRow);
+    const rows = Math.ceil(inventoryItems.length / itemsPerRow);
 
     // Adjust canvas height based on the number of rows
     const canvas = createCanvas(1200, rows * (iconSize + padding) + 2 * marginTop);
@@ -244,17 +251,15 @@ async function generateInventoryImage(victim) {
     let currentX = marginLeft;
     let currentY = marginTop;
 
-    for (let i = 0; i < victim.Inventory.length; i++) {
-        const item = victim.Inventory[i];
-        if (item) {
-            const itemImg = await loadImage(await downloadImage(getEquipmentImageUrl(item)));
-            ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
+    for (let i = 0; i < inventoryItems.length; i++) {
+        const item = inventoryItems[i];
+        const itemImg = await loadImage(await downloadImage(getEquipmentImageUrl(item)));
+        ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
 
-            currentX += iconSize + padding;
-            if ((i + 1) % itemsPerRow === 0) {
-                currentX = marginLeft;
-                currentY += iconSize + padding;
-            }
+        currentX += iconSize + padding;
+        if ((i + 1) % itemsPerRow === 0) {
+            currentX = marginLeft;
+            currentY += iconSize + padding;
         }
     }
 
@@ -271,7 +276,7 @@ async function postKill(kill, channel = config.botChannel) {
     }
     let inventoryPath = null;
     const filePath = await generateCompositeImage(kill);
-    if(kill.Victim.Inventory.length > 0){
+    if(kill.Victim.Inventory.some(item => item !== null)){
     inventoryPath = await generateInventoryImage(kill.Victim);}
 
     var embed = {
@@ -298,7 +303,7 @@ async function postKill(kill, channel = config.botChannel) {
     discordChannel.send({ embeds: [embed], files: [{ attachment: filePath, name: 'kill.png' }] }).then(() => {
         fs.unlinkSync(filePath);
     }).catch(console.error);
-    if(kill.Victim.Inventory.length > 0){
+    if(inventoryPath != null){
     const inventoryEmbed = {
         color: eventColor,
         image: {
