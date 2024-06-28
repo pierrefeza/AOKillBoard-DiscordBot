@@ -82,7 +82,7 @@ async function downloadImage(url) {
 }
 
 async function generateCompositeImage(kill) {
-    const canvas = createCanvas(1200, 600);
+    const canvas = createCanvas(1200, 800);
     const ctx = canvas.getContext('2d');
 
     ctx.fillStyle = '#000';
@@ -118,18 +118,50 @@ async function generateCompositeImage(kill) {
     ];
     const victimPositions = positions.map(pos => ({ x: pos.x + 600, y: pos.y }));
 
+    const iconSize = 75; // Increase the icon size
+
     for (let i = 0; i < equipmentTypes.length; i++) {
         const type = equipmentTypes[i];
 
         if (killer.Equipment[type]) {
             const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killer.Equipment[type])));
-            ctx.drawImage(killerImg, positions[i].x, positions[i].y, 50, 50);
+            ctx.drawImage(killerImg, positions[i].x, positions[i].y, iconSize, iconSize);
         }
 
         if (victim.Equipment[type]) {
             const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victim.Equipment[type])));
-            ctx.drawImage(victimImg, victimPositions[i].x, victimPositions[i].y, 50, 50);
+            ctx.drawImage(victimImg, victimPositions[i].x, victimPositions[i].y, iconSize, iconSize);
         }
+    }
+
+    // Damage bar calculation
+    const totalDamage = kill.Participants.reduce((acc, participant) => acc + participant.DamageDone, 0);
+    const barWidth = 800;
+    const barHeight = 20;
+    let barX = 200;
+    const barY = 700;
+
+    for (const participant of kill.Participants) {
+        const participantDamage = participant.DamageDone;
+        const participantPercentage = (participantDamage / totalDamage) * 100;
+        const participantBarWidth = (barWidth * participantPercentage) / 100;
+
+        ctx.fillStyle = getColorForParticipant(participant.Name); // Function to get color based on participant name
+        ctx.fillRect(barX, barY, participantBarWidth, barHeight);
+        barX += participantBarWidth;
+    }
+
+    // Add damage percentage text
+    barX = 200;
+    for (const participant of kill.Participants) {
+        const participantDamage = participant.DamageDone;
+        const participantPercentage = (participantDamage / totalDamage) * 100;
+        const participantBarWidth = (barWidth * participantPercentage) / 100;
+
+        ctx.fillStyle = '#FFF';
+        ctx.font = '15px Arial';
+        ctx.fillText(`${participant.Name}: ${participantPercentage.toFixed(2)}%`, barX + participantBarWidth / 2, barY + 35);
+        barX += participantBarWidth;
     }
 
     const filePath = path.join(__dirname, `kill-${Date.now()}.png`);
@@ -137,6 +169,12 @@ async function generateCompositeImage(kill) {
     fs.writeFileSync(filePath, buffer);
 
     return filePath;
+}
+
+function getColorForParticipant(participantName) {
+    const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
+    const index = participantName.length % colors.length;
+    return colors[index];
 }
 
 async function postKill(kill, channel = config.botChannel) {
