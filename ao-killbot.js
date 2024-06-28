@@ -1,19 +1,10 @@
-/*
- * @Author: Mark Arneman
- * @Date:   2017-08-18 11:12:18
- * @Last Modified by:   Mark Arneman
- * @Last Modified time: 2019-06-11
- */
-
-// Define static constants
-const config = require('./config.json');
-
-// Require modules
 const { Client, GatewayIntentBits, AttachmentBuilder } = require('discord.js');
 const axios = require('axios');
 const { createCanvas, loadImage } = require('canvas');
 const fs = require('fs');
 const path = require('path');
+
+const config = require('./config.json');
 
 const client = new Client({
     intents: [
@@ -24,11 +15,7 @@ const client = new Client({
 });
 
 var lastRecordedKill = -1;
-
-var playerNames = [];
-for (var i = 0; i < config.players.length; i++) {
-    playerNames.push(config.players[i].toLowerCase());
-}
+var playerNames = config.players.map(player => player.toLowerCase());
 
 async function fetchKills(limit = 51, offset = 0, retries = 3) {
     try {
@@ -88,37 +75,39 @@ async function generateCompositeImage(kill) {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = '#FFF';
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'center';
-
     const killer = kill.Killer;
     const victim = kill.Victim;
 
-    // Top line: Alliance and Guild Names, Date and Time
-    ctx.fillText(`[${killer.AllianceName}] ${killer.GuildName}`, 300, 40);
-    ctx.fillText(new Date(kill.TimeStamp).toLocaleString(), 600, 40);
-    ctx.fillText(`[${victim.AllianceName}] ${victim.GuildName}`, 900, 40);
+    // Alliance and Guild Names
+    ctx.fillStyle = '#FFF';
+    ctx.font = '24px Arial'; // half the size of the player name
+    ctx.textAlign = 'center';
+    ctx.fillText(`[${killer.AllianceName}] ${killer.GuildName}`, 250, 30);
+    ctx.fillText(new Date(kill.TimeStamp).toLocaleString(), 600, 30);
+    ctx.fillText(`[${victim.AllianceName}] ${victim.GuildName}`, 950, 30);
 
-    // Second line: Killer Name, Fame, Victim Name
-    ctx.fillText(killer.Name, 300, 80);
-    ctx.fillText(`Fame: ${dFormatter(kill.TotalVictimKillFame)}`, 600, 80);
-    ctx.fillText(victim.Name, 900, 80);
+    // Player Names
+    ctx.font = '36px Arial'; // 20% bigger than the IP section
+    ctx.fillText(killer.Name, 250, 70);
+    ctx.fillText(`Fame: ${dFormatter(kill.TotalVictimKillFame)}`, 600, 70);
+    ctx.fillText(victim.Name, 950, 70);
 
-    // Third line: Killer IP, Victim IP
-    ctx.fillText(`IP: ${Math.round(killer.AverageItemPower)}`, 300, 120);
-    ctx.fillText(`IP: ${Math.round(victim.AverageItemPower)}`, 900, 120);
+    // IP Section
+    ctx.font = '24px Arial';
+    ctx.fillText(`IP: ${Math.round(killer.AverageItemPower)}`, 250, 100);
+    ctx.fillText(`IP: ${Math.round(victim.AverageItemPower)}`, 950, 100);
 
     const equipmentTypes = ['Bag', 'Head', 'Cape', 'MainHand', 'Armor', 'OffHand', 'Potion', 'Shoes', 'Food', 'Mount'];
-    const positions = [
-        { x: 200, y: 200 }, { x: 300, y: 200 }, { x: 400, y: 200 }, 
-        { x: 200, y: 300 }, { x: 300, y: 300 }, { x: 400, y: 300 },
-        { x: 200, y: 400 }, { x: 300, y: 400 }, { x: 400, y: 400 },
-        { x: 300, y: 500 }
-    ];
-    const victimPositions = positions.map(pos => ({ x: pos.x + 600, y: pos.y }));
+    const gridWidth = 0.42 * canvas.width;
+    const iconSize = (gridWidth / 3) * 0.95;
 
-    const iconSize = 75; // Increase the icon size
+    const positions = [
+        { x: 5, y: 125 }, { x: 5 + iconSize, y: 125 }, { x: 5 + 2 * iconSize, y: 125 },
+        { x: 5, y: 125 + iconSize }, { x: 5 + iconSize, y: 125 + iconSize }, { x: 5 + 2 * iconSize, y: 125 + iconSize },
+        { x: 5, y: 125 + 2 * iconSize }, { x: 5 + iconSize, y: 125 + 2 * iconSize }, { x: 5 + 2 * iconSize, y: 125 + 2 * iconSize },
+        { x: 5 + iconSize, y: 125 + 3 * iconSize }
+    ];
+    const victimPositions = positions.map(pos => ({ x: canvas.width - 5 - iconSize * (3 - pos.x / iconSize), y: pos.y }));
 
     for (let i = 0; i < equipmentTypes.length; i++) {
         const type = equipmentTypes[i];
@@ -134,47 +123,11 @@ async function generateCompositeImage(kill) {
         }
     }
 
-    // Damage bar calculation
-    const totalDamage = kill.Participants.reduce((acc, participant) => acc + participant.DamageDone, 0);
-    const barWidth = 800;
-    const barHeight = 20;
-    let barX = 200;
-    const barY = 700;
-
-    for (const participant of kill.Participants) {
-        const participantDamage = participant.DamageDone;
-        const participantPercentage = (participantDamage / totalDamage) * 100;
-        const participantBarWidth = (barWidth * participantPercentage) / 100;
-
-        ctx.fillStyle = getColorForParticipant(participant.Name); // Function to get color based on participant name
-        ctx.fillRect(barX, barY, participantBarWidth, barHeight);
-        barX += participantBarWidth;
-    }
-
-    // Add damage percentage text
-    barX = 200;
-    for (const participant of kill.Participants) {
-        const participantDamage = participant.DamageDone;
-        const participantPercentage = (participantDamage / totalDamage) * 100;
-        const participantBarWidth = (barWidth * participantPercentage) / 100;
-
-        ctx.fillStyle = '#FFF';
-        ctx.font = '15px Arial';
-        ctx.fillText(`${participant.Name}: ${participantPercentage.toFixed(2)}%`, barX + participantBarWidth / 2, barY + 35);
-        barX += participantBarWidth;
-    }
-
     const filePath = path.join(__dirname, `kill-${Date.now()}.png`);
     const buffer = canvas.toBuffer('image/png');
     fs.writeFileSync(filePath, buffer);
 
     return filePath;
-}
-
-function getColorForParticipant(participantName) {
-    const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
-    const index = participantName.length % colors.length;
-    return colors[index];
 }
 
 async function postKill(kill, channel = config.botChannel) {
@@ -209,7 +162,6 @@ async function postKill(kill, channel = config.botChannel) {
     }
 
     discordChannel.send({ embeds: [embed], files: [{ attachment: filePath, name: 'kill.png' }] }).then(() => {
-        // Delete the temporary file after the message is sent
         fs.unlinkSync(filePath);
     }).catch(console.error);
 }
@@ -221,7 +173,6 @@ client.once('ready', () => {
         console.log(` - ${guild.name}`);
     });
 
-    // Check the bot channel
     const channel = client.channels.cache.get(config.botChannel);
     if (!channel) {
         console.error(`Bot channel with ID ${config.botChannel} not found!`);
@@ -229,12 +180,10 @@ client.once('ready', () => {
         console.log(`Bot will post in channel: ${channel.name}`);
     }
 
-    // Set 'Playing Game' in discord
     client.user.setActivity(config.playingGame);
 
     fetchKills();
 
-    // Fetch kills every 30s
     var timer = setInterval(function () {
         fetchKills();
     }, 30000);
@@ -246,7 +195,6 @@ client.on('messageCreate', message => {
     const args = message.content.slice(config.cmdPrefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
 
-    // Test Command - !ping
     if (command === 'ping') {
         message.reply('pong');
     } else if (command === 'kbinfo') {
@@ -257,10 +205,7 @@ client.on('messageCreate', message => {
             .catch(error => {
                 console.error('Error fetching event info:', error);
             });
-    }
-
-    // [ADMIN] - clear config.botChannel messages
-    else if (command === 'kbclear') {
+    } else if (command === 'kbclear') {
         if (config.admins.includes(message.author.id) && message.channel.id === config.botChannel) {
             message.channel.send('Clearing Killboard').then(msg => {
                 message.channel.messages.fetch().then(messages => {
