@@ -78,7 +78,7 @@ async function generateCompositeImage(kill) {
     ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
     // Apply the darkness
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const killer = kill.Killer;
