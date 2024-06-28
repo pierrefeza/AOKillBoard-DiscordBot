@@ -30,12 +30,16 @@ for (var i = 0; i < config.players.length; i++) {
     playerNames.push(config.players[i].toLowerCase());
 }
 
-async function fetchKills(limit = 51, offset = 0) {
+async function fetchKills(limit = 51, offset = 0, retries = 3) {
     try {
         const response = await axios.get(`https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`);
         parseKills(response.data);
     } catch (error) {
         console.error('Error fetching kills:', error);
+        if (retries > 0) {
+            console.log(`Retrying... (${retries} attempts left)`);
+            setTimeout(() => fetchKills(limit, offset, retries - 1), 5000);
+        }
     }
 }
 
@@ -106,18 +110,25 @@ async function generateCompositeImage(kill) {
     ctx.fillText(`IP: ${Math.round(victim.AverageItemPower)}`, 900, 120);
 
     const equipmentTypes = ['Bag', 'Head', 'Cape', 'MainHand', 'Armor', 'OffHand', 'Potion', 'Shoes', 'Food', 'Mount'];
+    const positions = [
+        { x: 200, y: 200 }, { x: 300, y: 200 }, { x: 400, y: 200 }, 
+        { x: 200, y: 300 }, { x: 300, y: 300 }, { x: 400, y: 300 },
+        { x: 200, y: 400 }, { x: 300, y: 400 }, { x: 400, y: 400 },
+        { x: 300, y: 500 }
+    ];
+    const victimPositions = positions.map(pos => ({ x: pos.x + 600, y: pos.y }));
 
     for (let i = 0; i < equipmentTypes.length; i++) {
         const type = equipmentTypes[i];
 
         if (killer.Equipment[type]) {
             const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killer.Equipment[type])));
-            ctx.drawImage(killerImg, 150, 150 + i * 50, 50, 50);
+            ctx.drawImage(killerImg, positions[i].x, positions[i].y, 50, 50);
         }
 
         if (victim.Equipment[type]) {
             const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victim.Equipment[type])));
-            ctx.drawImage(victimImg, 1000, 150 + i * 50, 50, 50);
+            ctx.drawImage(victimImg, victimPositions[i].x, victimPositions[i].y, 50, 50);
         }
     }
 
