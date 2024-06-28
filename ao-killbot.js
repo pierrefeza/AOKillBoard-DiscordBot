@@ -254,7 +254,7 @@ async function postKill(kill, channel = config.botChannel) {
     }
     let inventoryPath = null;
     const filePath = await generateCompositeImage(kill);
-    if(kill.Victim.Inventory > 0){
+    if(kill.Victim.Inventory.length > 0){
     inventoryPath = await generateInventoryImage(kill.Victim);}
 
     var embed = {
