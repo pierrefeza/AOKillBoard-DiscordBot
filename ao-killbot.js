@@ -125,9 +125,9 @@ async function generateCompositeImage(kill) {
 
     // Draw Damage Bar
     const totalDamage = kill.Participants.reduce((sum, participant) => sum + participant.DamageDone, 0);
-    const barWidth = canvas.width - 10;
+    const barWidth = canvas.width - 60; // Leave 10px space on each side
     const barHeight = 20;
-    const barX = 5;
+    const barX = 30; // 10px from the left edge
     const barY = positions[positions.length - 1].y + iconSize + 10;
     let currentX = barX;
 
