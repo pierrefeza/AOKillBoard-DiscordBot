@@ -146,8 +146,20 @@ async function generateCompositeImage(kill) {
         const color = getRandomColor();
         participantColors[participant.Name] = color;
 
+        // Draw the rounded rect bar
         ctx.fillStyle = color;
-        ctx.fillRect(currentX, barY, participantWidth, barHeight);
+        ctx.beginPath();
+        ctx.moveTo(currentX + 10, barY); // 10 is the radius of the rounded corners
+        ctx.lineTo(currentX + participantWidth - 10, barY);
+        ctx.quadraticCurveTo(currentX + participantWidth, barY, currentX + participantWidth, barY + 10);
+        ctx.lineTo(currentX + participantWidth, barY + barHeight - 10);
+        ctx.quadraticCurveTo(currentX + participantWidth, barY + barHeight, currentX + participantWidth - 10, barY + barHeight);
+        ctx.lineTo(currentX + 10, barY + barHeight);
+        ctx.quadraticCurveTo(currentX, barY + barHeight, currentX, barY + barHeight - 10);
+        ctx.lineTo(currentX, barY + 10);
+        ctx.quadraticCurveTo(currentX, barY, currentX + 10, barY);
+        ctx.closePath();
+        ctx.fill();
 
         ctx.fillStyle = '#FFF';
         ctx.fillText(`${Math.round(damagePercentage * 100)}%`, currentX + participantWidth / 2, barY + barHeight / 1.5);
@@ -174,7 +186,7 @@ async function generateCompositeImage(kill) {
         ctx.textAlign = 'left';
         ctx.fillText(damageText, textX + boxSize + textPadding, textY);
 
-        textX += boxSize + textWidth + 2 * textPadding;
+        textX += boxSize + textWidth + textPadding * 2;
     }
 
     const filePath = path.join(__dirname, `kill-${Date.now()}.png`);
