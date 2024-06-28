@@ -144,22 +144,22 @@ async function generateCompositeImage(kill) {
         if (killer.Equipment[type]) {
             const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killer.Equipment[type])));
             ctx.drawImage(killerImg, positions[i].x, positions[i].y, iconSize, iconSize);
-            if (killer.Equipment[type].Count > 1) {
+            if (killer.Equipment[type].Count >= 1) {
                 ctx.fillStyle = '#FFF';
                 ctx.font = '16px Arial';
                 ctx.textAlign = 'right';
-                ctx.fillText(killer.Equipment[type].Count, positions[i].x + iconSize - 10, positions[i].y + iconSize - 10);
+                ctx.fillText(killer.Equipment[type].Count, positions[i].x + iconSize - 28, positions[i].y + iconSize - 30);
             }
         }
     
         if (victim.Equipment[type]) {
             const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victim.Equipment[type])));
             ctx.drawImage(victimImg, victimPositions[i].x, victimPositions[i].y, iconSize, iconSize);
-            if (victim.Equipment[type].Count > 1) {
+            if (victim.Equipment[type].Count >= 1) {
                 ctx.fillStyle = '#FFF';
                 ctx.font = '16px Arial';
                 ctx.textAlign = 'right';
-                ctx.fillText(victim.Equipment[type].Count, victimPositions[i].x + iconSize - 10, victimPositions[i].y + iconSize - 10);
+                ctx.fillText(victim.Equipment[type].Count, victimPositions[i].x + iconSize - 28, victimPositions[i].y + iconSize - 30);
             }
         }
     }
@@ -268,20 +268,20 @@ async function generateInventoryImage(victim) {
         const item = inventoryItems[i];
         const itemImg = await loadImage(await downloadImage(getEquipmentImageUrl(item)));
         ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
-        if (item.Count > 1) {
+
+        // Display item count
+        if (item.Count && item.Count > 0) {
             ctx.fillStyle = '#FFF';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'right';
-            ctx.fillText(item.Count, currentX + iconSize - 10, currentY + iconSize - 10);
+            ctx.font = '20px Arial';
+            ctx.fillText(item.Count, currentX + iconSize - 28, currentY + iconSize - 18);
         }
-    
+
         currentX += iconSize + padding;
         if ((i + 1) % itemsPerRow === 0) {
             currentX = marginLeft;
             currentY += iconSize + padding;
         }
     }
-    
 
     const filePath = path.join(__dirname, `inventory-${Date.now()}.png`);
     const buffer = canvas.toBuffer('image/png');
@@ -289,6 +289,7 @@ async function generateInventoryImage(victim) {
 
     return filePath;
 }
+
 
 async function postKill(kill, channel = config.botChannel) {
     if (kill.TotalVictimKillFame === 0) {
