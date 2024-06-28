@@ -77,26 +77,47 @@ async function downloadImage(url) {
     return response.data;
 }
 
-async function generateCompositeImage(killerItem, victimItem) {
-    const canvas = createCanvas(800, 600);
+async function generateCompositeImage(kill) {
+    const canvas = createCanvas(1200, 600);
     const ctx = canvas.getContext('2d');
 
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const equipmentTypes = ['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes', 'Cape', 'Bag', 'Mount', 'Potion', 'Food'];
+    ctx.fillStyle = '#FFF';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+
+    const killer = kill.Killer;
+    const victim = kill.Victim;
+
+    // Top line: Alliance and Guild Names, Date and Time
+    ctx.fillText(`[${killer.AllianceName}] ${killer.GuildName}`, 300, 40);
+    ctx.fillText(new Date(kill.TimeStamp).toLocaleString(), 600, 40);
+    ctx.fillText(`[${victim.AllianceName}] ${victim.GuildName}`, 900, 40);
+
+    // Second line: Killer Name, Fame, Victim Name
+    ctx.fillText(killer.Name, 300, 80);
+    ctx.fillText(`Fame: ${dFormatter(kill.TotalVictimKillFame)}`, 600, 80);
+    ctx.fillText(victim.Name, 900, 80);
+
+    // Third line: Killer IP, Victim IP
+    ctx.fillText(`IP: ${Math.round(killer.AverageItemPower)}`, 300, 120);
+    ctx.fillText(`IP: ${Math.round(victim.AverageItemPower)}`, 900, 120);
+
+    const equipmentTypes = ['Bag', 'Head', 'Cape', 'MainHand', 'Armor', 'OffHand', 'Potion', 'Shoes', 'Food', 'Mount'];
 
     for (let i = 0; i < equipmentTypes.length; i++) {
         const type = equipmentTypes[i];
 
-        if (killerItem[type]) {
-            const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killerItem[type])));
-            ctx.drawImage(killerImg, 50, i * 50, 50, 50);
+        if (killer.Equipment[type]) {
+            const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killer.Equipment[type])));
+            ctx.drawImage(killerImg, 150, 150 + i * 50, 50, 50);
         }
 
-        if (victimItem[type]) {
-            const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victimItem[type])));
-            ctx.drawImage(victimImg, 150, i * 50, 50, 50);
+        if (victim.Equipment[type]) {
+            const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victim.Equipment[type])));
+            ctx.drawImage(victimImg, 1000, 150 + i * 50, 50, 50);
         }
     }
 
@@ -112,56 +133,17 @@ async function postKill(kill, channel = config.botChannel) {
         return;
     }
 
-    var victory = false;
-    if (kill.Killer.AllianceName.toLowerCase() === config.allianceName.toLowerCase() ||
-        kill.Killer.GuildName.toLowerCase() === config.guildName.toLowerCase() ||
-        config.players.includes(kill.Killer.Name.toLowerCase())) {
-        victory = true;
-    }
-
-    var killerItem = kill.Killer.Equipment;
-    var victimItem = kill.Victim.Equipment;
-
-    var killerDetails = `
-**Name:** ${kill.Killer.Name}
-**Guild:** ${kill.Killer.GuildName || 'None'}
-**Alliance:** ${kill.Killer.AllianceName || 'None'}
-**Item Power:** ${Math.round(kill.Killer.AverageItemPower)}
-`;
-
-    var victimDetails = `
-**Name:** ${kill.Victim.Name}
-**Guild:** ${kill.Victim.GuildName || 'None'}
-**Alliance:** ${kill.Victim.AllianceName || 'None'}
-**Item Power:** ${Math.round(kill.Victim.AverageItemPower)}
-`;
-
-    const filePath = await generateCompositeImage(killerItem, victimItem);
+    const filePath = await generateCompositeImage(kill);
 
     var embed = {
-        color: victory ? 0x008000 : 0x800000,
+        color: 0x008000,
         author: {
             name: kill.Killer.Name + " killed " + kill.Victim.Name,
-            icon_url: victory ? 'https://i.imgur.com/CeqX0CY.png' : 'https://albiononline.com/assets/images/killboard/kill__date.png',
+            icon_url: 'https://albiononline.com/assets/images/killboard/kill__date.png',
             url: 'https://albiononline.com/en/killboard/kill/' + kill.EventId
         },
         title: "Kill Details",
         description: `**Fame:** ${dFormatter(kill.TotalVictimKillFame)}`,
-        thumbnail: {
-            url: getEquipmentImageUrl(killerItem.MainHand)
-        },
-        fields: [
-            {
-                name: "Killer",
-                value: truncateText(killerDetails, 1024),
-                inline: true
-            },
-            {
-                name: "Victim",
-                value: truncateText(victimDetails, 1024),
-                inline: true
-            }
-        ],
         image: {
             url: 'attachment://kill.png'
         },
