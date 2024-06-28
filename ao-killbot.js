@@ -148,7 +148,7 @@ async function generateCompositeImage(kill) {
                 ctx.fillStyle = '#FFF';
                 ctx.font = '16px Arial';
                 ctx.textAlign = 'right';
-                ctx.fillText(killer.Equipment[type].Count, positions[i].x + iconSize - 5, positions[i].y + iconSize - 5);
+                ctx.fillText(killer.Equipment[type].Count, positions[i].x + iconSize - 10, positions[i].y + iconSize - 10);
             }
         }
     
@@ -159,7 +159,7 @@ async function generateCompositeImage(kill) {
                 ctx.fillStyle = '#FFF';
                 ctx.font = '16px Arial';
                 ctx.textAlign = 'right';
-                ctx.fillText(victim.Equipment[type].Count, victimPositions[i].x + iconSize - 5, victimPositions[i].y + iconSize - 5);
+                ctx.fillText(victim.Equipment[type].Count, victimPositions[i].x + iconSize - 10, victimPositions[i].y + iconSize - 10);
             }
         }
     }
@@ -272,7 +272,7 @@ async function generateInventoryImage(victim) {
             ctx.fillStyle = '#FFF';
             ctx.font = '16px Arial';
             ctx.textAlign = 'right';
-            ctx.fillText(item.Count, currentX + iconSize - 5, currentY + iconSize - 5);
+            ctx.fillText(item.Count, currentX + iconSize - 10, currentY + iconSize - 10);
         }
     
         currentX += iconSize + padding;
@@ -281,6 +281,7 @@ async function generateInventoryImage(victim) {
             currentY += iconSize + padding;
         }
     }
+    
 
     const filePath = path.join(__dirname, `inventory-${Date.now()}.png`);
     const buffer = canvas.toBuffer('image/png');
