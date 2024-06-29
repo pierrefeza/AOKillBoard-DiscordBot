@@ -23,13 +23,15 @@ async function fetchKills(limit = 51, offset = 0, retries = 3) {
     const response = await axios.get(
       `https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`
     );
-    console.log("API Response:", response.data); // Log the API response
+    console.log(`Fetched ${response.data.length} kills`);
     parseKills(response.data);
   } catch (error) {
-    console.error("Error fetching kills:", error);
+    console.error("Error fetching kills:", error.message);
     if (retries > 0) {
       console.log(`Retrying... (${retries} attempts left)`);
       setTimeout(() => fetchKills(limit, offset, retries - 1), 5000);
+    } else {
+      console.error("All retries failed");
     }
   }
 }
@@ -38,32 +40,33 @@ function parseKills(events) {
   var count = 0;
   var breaker = lastRecordedKill;
 
-  console.log("Parsing Kills:", events); // Log the kills being parsed
-
   events.some(function (kill, index) {
     if (index === 0) {
       lastRecordedKill = kill.EventId;
     }
 
     if (kill.EventId !== breaker) {
-      console.log("Kill Details:", kill); // Log the details of each kill
+      // Log only when specific conditions are met
       if (
         kill.Killer.AllianceName.toLowerCase() ===
           config.allianceName.toLowerCase() ||
         kill.Victim.AllianceName.toLowerCase() ===
           config.allianceName.toLowerCase()
       ) {
+        console.log(`Posting kill due to alliance match: ${kill.EventId}`);
         postKill(kill);
       } else if (
         kill.Killer.GuildName.toLowerCase() ===
           config.guildName.toLowerCase() ||
         kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase()
       ) {
+        console.log(`Posting kill due to guild match: ${kill.EventId}`);
         postKill(kill);
       } else if (
         playerNames.includes(kill.Killer.Name.toLowerCase()) ||
         playerNames.includes(kill.Victim.Name.toLowerCase())
       ) {
+        console.log(`Posting kill due to player name match: ${kill.EventId}`);
         postKill(kill);
       }
     } else {
@@ -72,6 +75,10 @@ function parseKills(events) {
 
     return kill.EventId === breaker;
   });
+
+  console.log(
+    `Parsed ${events.length} kills, skipped ${count} already recorded kills`
+  );
 }
 
 function getEquipmentImageUrl(equipment) {
@@ -439,6 +446,7 @@ async function postKill(kill, channel = config.botChannel) {
   if (kill.TotalVictimKillFame === 0) {
     return;
   }
+  console.log(`Posting kill: ${kill.EventId}`);
 
   // Determine the color for the event
   let eventColor = 0x008000; // Default green color
