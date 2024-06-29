@@ -74,7 +74,7 @@ async function generateCompositeImage(kill) {
     const ctx = canvas.getContext('2d');
 
     // Load and draw the background image with opacity
-    const backgroundImage = await loadImage(await downloadImage('https://albion-killbot.com/static/media/call_to_arms.ae31afb31ef33da0b6eb.jpeg'));
+    const backgroundImage = await loadImage(await downloadImage('https://i.imgur.com/Cf4Ysrv.jpg'));
     ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
     // Apply the darkness
@@ -138,11 +138,14 @@ async function generateCompositeImage(kill) {
     ];
     const victimPositions = positions.map(pos => ({ x: canvas.width - 75 - iconSize * (3 - pos.x / iconSize), y: pos.y }));
 
+        
     for (let i = 0; i < equipmentTypes.length; i++) {
         const type = equipmentTypes[i];
 
         if (killer.Equipment[type]) {
-            const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killer.Equipment[type])));
+            if(killer.Equipment['MainHand'] && killer.Equipment['MainHand'].includes("2H") && type == 'OffHand')
+                killer.Equipment[type] = killer.Equipment['MainHand'];
+                const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killer.Equipment[type])));
             ctx.drawImage(killerImg, positions[i].x, positions[i].y, iconSize, iconSize);
             if (killer.Equipment[type].Count >= 1) {
                 ctx.fillStyle = '#FFF';
@@ -153,6 +156,8 @@ async function generateCompositeImage(kill) {
         }
     
         if (victim.Equipment[type]) {
+            if(victim.Equipment['MainHand'] && victim.Equipment['MainHand'].includes("2H") && type == 'OffHand')
+                victim.Equipment[type] = victim.Equipment['MainHand'];
             const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victim.Equipment[type])));
             ctx.drawImage(victimImg, victimPositions[i].x, victimPositions[i].y, iconSize, iconSize);
             if (victim.Equipment[type].Count >= 1) {
