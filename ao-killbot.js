@@ -83,8 +83,17 @@ function truncateText(text, maxLength) {
 }
 
 async function downloadImage(url) {
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-  return response.data;
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            console.error(`Image not found for URL: ${url}`);
+            return null; // Return null if the image is not found
+        } else {
+            throw error; // Rethrow the error if it's not a 404
+        }
+    }
 }
 
 async function generateCompositeImage(kill) {
