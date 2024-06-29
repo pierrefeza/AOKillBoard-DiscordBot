@@ -20,8 +20,10 @@ var eventColor = 0x008000; // Green color by default
 
 async function fetchKills(limit = 51, offset = 0, retries = 3) {
   try {
-    const response = await axios.get(`https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`);
-    console.log('API Response:', response.data);  // Log the API response
+    const response = await axios.get(
+      `https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`
+    );
+    console.log("API Response:", response.data); // Log the API response
     parseKills(response.data);
   } catch (error) {
     console.error("Error fetching kills:", error);
@@ -36,12 +38,15 @@ function parseKills(events) {
   var count = 0;
   var breaker = lastRecordedKill;
 
+  console.log("Parsing Kills:", events); // Log the kills being parsed
+
   events.some(function (kill, index) {
     if (index === 0) {
       lastRecordedKill = kill.EventId;
     }
 
     if (kill.EventId !== breaker) {
+      console.log("Kill Details:", kill); // Log the details of each kill
       if (
         kill.Killer.AllianceName.toLowerCase() ===
           config.allianceName.toLowerCase() ||
@@ -82,17 +87,17 @@ function truncateText(text, maxLength) {
 }
 
 async function downloadImage(url) {
-    try {
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
-        return response.data;
-    } catch (error) {
-        if (error.response && error.response.status === 404) {
-            console.error(`Image not found for URL: ${url}`);
-            return null; // Return null if the image is not found
-        } else {
-            throw error; // Rethrow the error if it's not a 404
-        }
+  try {
+    const response = await axios.get(url, { responseType: "arraybuffer" });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      console.error(`Image not found for URL: ${url}`);
+      return null; // Return null if the image is not found
+    } else {
+      throw error; // Rethrow the error if it's not a 404
     }
+  }
 }
 
 async function generateCompositeImage(kill) {
@@ -403,7 +408,7 @@ async function generateInventoryImage(victim) {
       await downloadImage(getEquipmentImageUrl(item))
     );
     if (itemImg) {
-        ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
+      ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
     }
     // Display item count
     if (item.Count && item.Count > 0) {
