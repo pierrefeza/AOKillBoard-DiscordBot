@@ -14,4 +14,7 @@ WORKDIR /usr/src/app
 
 RUN npm install
 
+# Rebuild native modules
+RUN npm rebuild canvas
+
 CMD ["npm", "start"]
