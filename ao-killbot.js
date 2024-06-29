@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, AttachmentBuilder } = require("discord.js");
 const axios = require("axios");
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
@@ -16,8 +16,7 @@ const client = new Client({
 
 var lastRecordedKill = -1;
 var playerNames = config.players.map((player) => player.toLowerCase());
-var lastRecordedKill = -1;
-var lastProcessedKill = -1;
+var eventColor = 0x008000; // Green color by default
 
 async function fetchKills(limit = 51, lastEventId = null, retries = 3) {
   let offset = 0;
@@ -68,8 +67,7 @@ function parseKills(events) {
       lastRecordedKill = kill.EventId;
     }
 
-    // Only process and post the kill if it hasn't been processed yet
-    if (kill.EventId !== breaker && kill.EventId > lastProcessedKill) {
+    if (kill.EventId !== breaker) {
       if (
         kill.Killer.AllianceName.toLowerCase() ===
           config.allianceName.toLowerCase() ||
@@ -92,7 +90,6 @@ function parseKills(events) {
         console.log(`Posting kill due to player name match: ${kill.EventId}`);
         postKill(kill);
       }
-      lastProcessedKill = kill.EventId; // Update the last processed kill ID
     } else {
       count++;
     }
@@ -109,6 +106,12 @@ function getEquipmentImageUrl(equipment) {
   return equipment && equipment.Type
     ? `https://render.albiononline.com/v1/item/${equipment.Type}.png?count=${equipment.Count}&quality=${equipment.Quality}`
     : "https://albiononline.com/assets/images/killboard/kill__date.png";
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength
+    ? text.substring(0, maxLength - 3) + "..."
+    : text;
 }
 
 async function downloadImage(url) {
@@ -553,6 +556,10 @@ client.once("ready", () => {
   client.user.setActivity(config.playingGame);
 
   fetchKills(51, lastRecordedKill);
+
+  var timer = setInterval(function () {
+    fetchKills(51, lastRecordedKill);
+  }, 30000);
 });
 
 client.on("messageCreate", (message) => {
@@ -581,7 +588,7 @@ client.on("messageCreate", (message) => {
       config.admins.includes(message.author.id) &&
       message.channel.id === config.botChannel
     ) {
-      message.channel.send("Clearing Killboard").then(() => {
+      message.channel.send("Clearing Killboard").then((msg) => {
         message.channel.messages.fetch().then((messages) => {
           message.channel.bulkDelete(messages);
           console.log(`[ADMIN] ${message.author.username} cleared Killboard`);
