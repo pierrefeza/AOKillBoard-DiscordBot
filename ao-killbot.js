@@ -20,9 +20,8 @@ var eventColor = 0x008000; // Green color by default
 
 async function fetchKills(limit = 51, offset = 0, retries = 3) {
   try {
-    const response = await axios.get(
-      `https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`
-    );
+    const response = await axios.get(`https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`);
+    console.log('API Response:', response.data);  // Log the API response
     parseKills(response.data);
   } catch (error) {
     console.error("Error fetching kills:", error);
