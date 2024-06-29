@@ -552,7 +552,13 @@ client.once("ready", () => {
 
   client.user.setActivity(config.playingGame);
 
+  // Fetch kills immediately upon startup
   fetchKills(51, lastRecordedKill);
+
+  // Set an interval to fetch kills every 30 seconds
+  setInterval(() => {
+    fetchKills(51, lastRecordedKill);
+  }, 30000); // 30,000 milliseconds = 30 seconds
 });
 
 client.on("messageCreate", (message) => {
