@@ -403,8 +403,9 @@ async function generateInventoryImage(victim) {
     const itemImg = await loadImage(
       await downloadImage(getEquipmentImageUrl(item))
     );
-    ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
-
+    if (itemImg) {
+        ctx.drawImage(itemImg, currentX, currentY, iconSize, iconSize);
+    }
     // Display item count
     if (item.Count && item.Count > 0) {
       ctx.fillStyle = "#FFF";
