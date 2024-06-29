@@ -18,42 +18,20 @@ var lastRecordedKill = -1;
 var playerNames = config.players.map((player) => player.toLowerCase());
 var eventColor = 0x008000; // Green color by default
 
-async function fetchKills(limit = 51, lastEventId = null, retries = 3) {
-  let offset = 0;
-  let shouldContinue = true;
-
-  while (shouldContinue) {
-    try {
-      const response = await axios.get(
-        `https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`
-      );
-      const events = response.data;
-
-      if (events.length === 0) {
-        shouldContinue = false;
-        break;
-      }
-
-      const lastFetchedEventId = events[events.length - 1].EventId;
-
-      if (lastEventId && lastFetchedEventId <= lastEventId) {
-        shouldContinue = false;
-        break;
-      }
-
-      parseKills(events);
-
-      offset += limit;
-    } catch (error) {
-      console.error("Error fetching kills:", error.message);
-      if (retries > 0) {
-        console.log(`Retrying... (${retries} attempts left)`);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        return fetchKills(limit, lastEventId, retries - 1);
-      } else {
-        console.error("All retries failed");
-        shouldContinue = false;
-      }
+async function fetchKills(limit = 51, offset = 0, retries = 3) {
+  try {
+    const response = await axios.get(
+      `https://gameinfo.albiononline.com/api/gameinfo/events?limit=${limit}&offset=${offset}`
+    );
+    console.log(`Fetched ${response.data.length} kills`);
+    parseKills(response.data);
+  } catch (error) {
+    console.error("Error fetching kills:", error.message);
+    if (retries > 0) {
+      console.log(`Retrying... (${retries} attempts left)`);
+      setTimeout(() => fetchKills(limit, offset, retries - 1), 5000);
+    } else {
+      console.error("All retries failed");
     }
   }
 }
@@ -68,6 +46,7 @@ function parseKills(events) {
     }
 
     if (kill.EventId !== breaker) {
+      // Log only when specific conditions are met
       if (
         kill.Killer.AllianceName.toLowerCase() ===
           config.allianceName.toLowerCase() ||
@@ -555,10 +534,10 @@ client.once("ready", () => {
 
   client.user.setActivity(config.playingGame);
 
-  fetchKills(51, lastRecordedKill);
+  fetchKills();
 
   var timer = setInterval(function () {
-    fetchKills(51, lastRecordedKill);
+    fetchKills();
   }, 30000);
 });
 
