@@ -143,8 +143,8 @@ async function generateCompositeImage(kill) {
         const type = equipmentTypes[i];
 
         if (killer.Equipment[type]) {
-            if(killer.Equipment['MainHand'] && killer.Equipment['MainHand'].includes("2H") && type == 'OffHand')
-                killer.Equipment[type] = killer.Equipment['MainHand'];
+            if(killer.Equipment['MainHand'] && killer.Equipment['MainHand'].Type.includes("2H") && type == 'OffHand')
+                killer.Equipment[type].Type = killer.Equipment['MainHand'].Type;
                 const killerImg = await loadImage(await downloadImage(getEquipmentImageUrl(killer.Equipment[type])));
             ctx.drawImage(killerImg, positions[i].x, positions[i].y, iconSize, iconSize);
             if (killer.Equipment[type].Count >= 1) {
@@ -156,8 +156,8 @@ async function generateCompositeImage(kill) {
         }
     
         if (victim.Equipment[type]) {
-            if(victim.Equipment['MainHand'] && victim.Equipment['MainHand'].includes("2H") && type == 'OffHand')
-                victim.Equipment[type] = victim.Equipment['MainHand'];
+            if(victim.Equipment['MainHand'] && victim.Equipment['MainHand'].Type.includes("2H") && type == 'OffHand')
+                victim.Equipment[type].Type = victim.Equipment['MainHand'].Type;
             const victimImg = await loadImage(await downloadImage(getEquipmentImageUrl(victim.Equipment[type])));
             ctx.drawImage(victimImg, victimPositions[i].x, victimPositions[i].y, iconSize, iconSize);
             if (victim.Equipment[type].Count >= 1) {
