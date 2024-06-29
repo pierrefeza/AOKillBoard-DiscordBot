@@ -98,7 +98,7 @@ async function generateCompositeImage(kill) {
   ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
   // Apply the darkness
-  ctx.fillStyle = "rgba(0, 0, 0, 0.)";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const killer = kill.Killer;
@@ -378,9 +378,7 @@ async function generateInventoryImage(victim) {
   const ctx = canvas.getContext("2d");
 
   const backgroundImage = await loadImage(
-    await downloadImage(
-      "https://albion-killbot.com/static/media/call_to_arms.ae31afb31ef33da0b6eb.jpeg"
-    )
+    await downloadImage("https://i.imgur.com/Cf4Ysrv.jpg")
   );
   ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
