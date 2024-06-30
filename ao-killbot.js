@@ -96,11 +96,23 @@ async function fetchKillsDelayed() {
       `https://gameinfo.albiononline.com/api/gameinfo/events?limit=51&offset=${offset}`
     );
     const delayedEvents = response.data;
-    delayedEvents.forEach((event) => {
-      if (!publishedEventIds.includes(event.EventId)) {
-        console.log(`Delayed posting for event ID: ${event.EventId}`);
-        queueKill(event);
-        publishedEventIds.push(event.EventId);
+
+    delayedEvents.forEach((kill) => {
+      // Ensure the event has not already been published
+      if (!publishedEventIds.includes(kill.EventId)) {
+        // Apply the same filtering logic
+        if (
+          kill.Killer.AllianceName.toLowerCase() === config.allianceName.toLowerCase() ||
+          kill.Victim.AllianceName.toLowerCase() === config.allianceName.toLowerCase() ||
+          kill.Killer.GuildName.toLowerCase() === config.guildName.toLowerCase() ||
+          kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase() ||
+          playerNames.includes(kill.Killer.Name.toLowerCase()) ||
+          playerNames.includes(kill.Victim.Name.toLowerCase())
+        ) {
+          console.log(`Delayed posting for event ID: ${kill.EventId}`);
+          queueKill(kill);
+          publishedEventIds.push(kill.EventId);
+        }
       }
     });
 
