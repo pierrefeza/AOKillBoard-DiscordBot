@@ -15,7 +15,12 @@ const client = new Client({
 });
 
 var lastRecordedKill = -1;
+var publishedEventIds = []; // List to track published event IDs
 var playerNames = config.players.map((player) => player.toLowerCase());
+
+// Queue to manage the kills and their corresponding inventory images
+const sendQueue = [];
+let isProcessingQueue = false;
 
 async function fetchKills(limit = 51, offset = 0, retries = 3) {
   try {
@@ -44,42 +49,91 @@ function parseKills(events) {
       lastRecordedKill = kill.EventId;
     }
 
-    if (kill.EventId !== breaker) {
-      // Log only when specific conditions are met
-      if (
-        kill.Killer.AllianceName.toLowerCase() ===
-          config.allianceName.toLowerCase() ||
-        kill.Victim.AllianceName.toLowerCase() ===
-          config.allianceName.toLowerCase()
-      ) {
-        console.log(`Posting kill due to alliance match: ${kill.EventId}`);
-        postKill(kill);
-      } else if (
-        kill.Killer.GuildName.toLowerCase() ===
-          config.guildName.toLowerCase() ||
-        kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase()
-      ) {
-        console.log(`Posting kill due to guild match: ${kill.EventId}`);
-        postKill(kill);
-      } else if (
-        playerNames.includes(kill.Killer.Name.toLowerCase()) ||
-        playerNames.includes(kill.Victim.Name.toLowerCase())
-      ) {
-        console.log(`Posting kill due to player name match: ${kill.EventId}`);
-        postKill(kill);
-      }
-    } else {
+    // Check if the event has already been published
+    if (publishedEventIds.includes(kill.EventId)) {
       count++;
+      return false;
     }
 
-    return kill.EventId === breaker;
+    // Log only when specific conditions are met
+    if (
+      kill.Killer.AllianceName.toLowerCase() === config.allianceName.toLowerCase() ||
+      kill.Victim.AllianceName.toLowerCase() === config.allianceName.toLowerCase()
+    ) {
+      console.log(`Posting kill due to alliance match: ${kill.EventId}`);
+      queueKill(kill);
+    } else if (
+      kill.Killer.GuildName.toLowerCase() === config.guildName.toLowerCase() ||
+      kill.Victim.GuildName.toLowerCase() === config.guildName.toLowerCase()
+    ) {
+      console.log(`Posting kill due to guild match: ${kill.EventId}`);
+      queueKill(kill);
+    } else if (
+      playerNames.includes(kill.Killer.Name.toLowerCase()) ||
+      playerNames.includes(kill.Victim.Name.toLowerCase())
+    ) {
+      console.log(`Posting kill due to player name match: ${kill.EventId}`);
+      queueKill(kill);
+    }
+
+    publishedEventIds.push(kill.EventId); // Add the event ID to the published list
+    return false;
   });
 
-  console.log(
-    `Parsed ${events.length} kills, skipped ${count} already recorded kills`
-  );
+  console.log(`Parsed ${events.length} kills, skipped ${count} already recorded kills`);
+
+  // Trim the list of published event IDs to maintain efficiency
+  if (publishedEventIds.length > 500) {
+    publishedEventIds.splice(0, publishedEventIds.length - 500);
+  }
 }
 
+// Delayed fetching function to ensure no events are missed
+async function fetchKillsDelayed() {
+  const offset = 102; // Offset to avoid overriding real-time crawling
+  try {
+    const response = await axios.get(
+      `https://gameinfo.albiononline.com/api/gameinfo/events?limit=51&offset=${offset}`
+    );
+    const delayedEvents = response.data;
+    delayedEvents.forEach((event) => {
+      if (!publishedEventIds.includes(event.EventId)) {
+        console.log(`Delayed posting for event ID: ${event.EventId}`);
+        queueKill(event);
+        publishedEventIds.push(event.EventId);
+      }
+    });
+
+    // Trim the list of published event IDs to maintain efficiency
+    if (publishedEventIds.length > 500) {
+      publishedEventIds.splice(0, publishedEventIds.length - 500);
+    }
+  } catch (error) {
+    console.error("Error fetching delayed kills:", error.message);
+  }
+}
+
+// Queue the kill and process the queue
+function queueKill(kill) {
+  sendQueue.push(kill);
+  processQueue();
+}
+
+// Process the queue to send each kill and inventory image pair in order
+async function processQueue() {
+  if (isProcessingQueue || sendQueue.length === 0) return;
+
+  isProcessingQueue = true;
+
+  while (sendQueue.length > 0) {
+    const kill = sendQueue.shift();
+    await postKill(kill);
+  }
+
+  isProcessingQueue = false;
+}
+
+// Other existing functions
 function getEquipmentImageUrl(equipment) {
   return equipment && equipment.Type
     ? `https://render.albiononline.com/v1/item/${equipment.Type}.png?count=${equipment.Count}&quality=${equipment.Quality}`
@@ -180,6 +234,22 @@ async function generateCompositeImage(kill) {
   ); // Position the icon above the text
   ctx.font = "24px Arial";
   ctx.fillText(`${dFormatter(kill.TotalVictimKillFame)}`, 600, fameY + 20);
+
+  if(kill.GroupMembers.length > 1){
+  const groupIcon = await loadImage(
+    await downloadImage("https://i.imgur.com/c18y0zF.png")
+  );
+  const groupIconSize = 50;
+  const groupY = fameY + 110; // Center of the image
+  ctx.drawImage(
+    groupIcon,
+    570,
+    groupY - groupIconSize + 30,
+    groupIconSize,
+    groupIconSize
+  ); // Position the icon above the text
+  ctx.font = "24px Arial";
+  ctx.fillText(`${dFormatter(kill.GroupMembers.length)}`, 600, groupY + 50);}
 
   // Player Names
   ctx.font = "36px Arial"; // 20% bigger than the IP section
@@ -486,35 +556,36 @@ async function postKill(kill, channel = config.botChannel) {
     return;
   }
 
-  // Send the kill image first
-  discordChannel
-    .send({
+  try {
+    // Send the kill image first
+    await discordChannel.send({
       embeds: [embed],
       files: [{ attachment: filePath, name: "kill.png" }],
-    })
-    .then(() => {
-      fs.unlinkSync(filePath);
-      // If there's an inventory image, send it next
-      if (inventoryPath !== null) {
-        const inventoryEmbed = {
-          color: eventColor,
-          image: {
-            url: "attachment://inventory.png",
-          },
-        };
+    });
 
-        discordChannel
-          .send({
-            embeds: [inventoryEmbed],
-            files: [{ attachment: inventoryPath, name: "inventory.png" }],
-          })
-          .then(() => {
-            fs.unlinkSync(inventoryPath);
-          })
-          .catch(console.error);
-      }
-    })
-    .catch(console.error);
+    // Delete the kill image file after sending
+    fs.unlinkSync(filePath);
+
+    // If there's an inventory image, send it next
+    if (inventoryPath !== null) {
+      const inventoryEmbed = {
+        color: eventColor,
+        image: {
+          url: "attachment://inventory.png",
+        },
+      };
+
+      await discordChannel.send({
+        embeds: [inventoryEmbed],
+        files: [{ attachment: inventoryPath, name: "inventory.png" }],
+      });
+
+      // Delete the inventory image file after sending
+      fs.unlinkSync(inventoryPath);
+    }
+  } catch (error) {
+    console.error("Error sending kill or inventory images:", error);
+  }
 }
 
 client.once("ready", () => {
@@ -533,21 +604,20 @@ client.once("ready", () => {
 
   client.user.setActivity(config.playingGame);
 
+  // Initial fetch
   fetchKills();
 
-  var timer = setInterval(function () {
-    fetchKills();
-  }, 20000);
+  // Regular fetch interval (every 30 seconds)
+  setInterval(fetchKills, 30 * 1000);
+
+  // Delayed fetch interval (every 5 minutes)
+  setInterval(fetchKillsDelayed, 5 * 60 * 1000);
 });
 
 client.on("messageCreate", (message) => {
-  if (!message.content.startsWith(config.cmdPrefix) || message.author.bot)
-    return;
+  if (!message.content.startsWith(config.cmdPrefix) || message.author.bot) return;
 
-  const args = message.content
-    .slice(config.cmdPrefix.length)
-    .trim()
-    .split(/ +/g);
+  const args = message.content.slice(config.cmdPrefix.length).trim().split(/ +/g);
   const command = args.shift().toLowerCase();
 
   if (command === "ping") {
@@ -556,7 +626,7 @@ client.on("messageCreate", (message) => {
     axios
       .get(`https://gameinfo.albiononline.com/api/gameinfo/events/${args[0]}`)
       .then((response) => {
-        postKill(response.data, message.channel.id);
+        queueKill(response.data);
       })
       .catch((error) => {
         console.error("Error fetching event info:", error);
