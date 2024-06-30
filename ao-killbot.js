@@ -235,7 +235,7 @@ async function generateCompositeImage(kill) {
   ctx.font = "24px Arial";
   ctx.fillText(`${dFormatter(kill.TotalVictimKillFame)}`, 600, fameY + 20);
 
-  if(kill.GroupMembers.length > 1){
+  if(kill.GroupMembers.length > 1 && kill.GroupMembers.length != kill.Participants.length){
   const groupIcon = await loadImage(
     await downloadImage("https://i.imgur.com/c18y0zF.png")
   );
