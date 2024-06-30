@@ -16,7 +16,6 @@ const client = new Client({
 
 var lastRecordedKill = -1;
 var playerNames = config.players.map((player) => player.toLowerCase());
-var eventColor = 0x008000; // Green color by default
 
 async function fetchKills(limit = 51, offset = 0, retries = 3) {
   try {
@@ -538,7 +537,7 @@ client.once("ready", () => {
 
   var timer = setInterval(function () {
     fetchKills();
-  }, 30000);
+  }, 20000);
 });
 
 client.on("messageCreate", (message) => {
