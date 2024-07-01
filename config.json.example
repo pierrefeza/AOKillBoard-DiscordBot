@@ -1,0 +1,15 @@
+{
+	"cmdPrefix": "!",
+	"players": [
+		"Marn"
+	],
+	"allianceName": "<NONE>",
+	"guildName": "8-bit",
+	"username": "AOKillBoard-DiscordBot",
+	"admins": [
+		""
+	],
+	"botChannel": "",
+	"playingGame": "Albion Killboard Bot",
+	"token": ""
+}
