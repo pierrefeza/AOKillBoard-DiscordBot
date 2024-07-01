@@ -6,8 +6,9 @@ A Discord bot for Albion Online's kill board.
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-![image](https://github.com/pierrefeza/AOKillBoard-DiscordBot/assets/174371609/f06e5285-d484-42a0-a102-b3d7065d8d8d)
-![image](https://github.com/pierrefeza/AOKillBoard-DiscordBot/assets/174371609/d1dcbb2b-36d9-4273-a7f9-8e076fd217f3)
+![image](https://github.com/pierrefeza/AOKillBoard-DiscordBot/assets/174371609/7540fa1f-c292-4e18-812b-db23c80f66e0)
+![image](https://github.com/pierrefeza/AOKillBoard-DiscordBot/assets/174371609/f8840047-aaf0-4b30-864e-afe4592831a8)
+
 
 
 
