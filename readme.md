@@ -54,7 +54,7 @@ These instructions will get you a copy of the project up and running on your loc
     "guildName": "8-bit",
     "username": "AOKillBoard-DiscordBot",
     "admins": [
-        "224865398034079430"
+        "ADMIN_ID"
     ],
     "botChannel": "445822300890946337",
     "playingGame": "Albion Killboard Bot",
