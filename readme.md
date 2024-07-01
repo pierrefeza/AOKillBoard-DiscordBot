@@ -65,15 +65,15 @@ These instructions will get you a copy of the project up and running on your loc
 
 1. **Build the Docker image:**
     ```sh
-    docker build -t AOKillBoard-DiscordBot .
+    docker build -t aokillboard-discordbot .
 
 2. **Run the Docker container:**
     ```sh
-    docker run -d --name AOKillBoard-DiscordBot AOKillBoard-DiscordBot
+    docker run -d --name aokillboard-discordbot aokillboard-discordbot 
 
 3. **Check the logs:**
     ```sh
-    docker logs -f AOKillBoard-DiscordBot
+    docker logs -f aokillboard-discordbot
 
 ### 3. Running on AWS EC2
 
@@ -115,15 +115,15 @@ These instructions will get you a copy of the project up and running on your loc
 
 8. **Build the Docker image on EC2:**
     ```sh
-    docker build -t AOKillBoard-DiscordBot .
+    docker build -t aokillboard-discordbot .
 
 9. **Run the Docker container on EC2:**
     ```sh
-    docker run -d --name AOKillBoard-DiscordBot AOKillBoard-DiscordBot
+    docker run -d --name aokillboard-discordbot aokillboard-discordbot
 
 10. **Check the logs to ensure the bot is running:**
     ```sh
-    docker logs -f AOKillBoard-DiscordBot
+    docker logs -f aokillboard-discordbot
 
 ### Built With
 
