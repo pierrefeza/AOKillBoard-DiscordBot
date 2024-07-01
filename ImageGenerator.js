@@ -240,7 +240,10 @@ class ImageGenerator {
     } catch (error) {
       if (error.response && error.response.status === 404) {
         console.error(`Image not found for URL: ${url}`);
-        return null;
+        const placeholderUrl = "https://i.imgur.com/LT0WPSw.jpeg";
+        console.error(`Using placeholder image instead: ${placeholderUrl}`);
+        const placeholderResponse = await axios.get(placeholderUrl, { responseType: "arraybuffer" });
+        return placeholderResponse.data;
       } else {
         throw error;
       }
