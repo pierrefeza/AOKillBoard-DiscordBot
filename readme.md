@@ -75,6 +75,14 @@ These instructions will get you a copy of the project up and running on your loc
     ```sh
     docker logs -f aokillboard-discordbot
 
+4. **Summary commands**
+    ```sh
+    docker stop aokillboard-discordbot
+    docker rm aokillboard-discordbot
+    docker build -t aokillboard-discordbot .
+    docker run -d --name aokillboard-discordbot aokillboard-discordbot
+    docker logs -f aokillboard-discordbot
+
 ### 3. Running on AWS EC2
 
 1. **Launch an EC2 instance:**
@@ -135,6 +143,8 @@ These instructions will get you a copy of the project up and running on your loc
 * Current working state by [Pierre Donal Feza](https://github.com/pierrefeza) Discord: **yokokosparda**
 * [UI Layout inspiration](https://albion-killbot.com) - albion-killbot
 * [Initial Implementation](https://github.com/bearlikelion/ao-killbot/) from **Mark Arneman**
+
+
 
 
 
