@@ -2,7 +2,7 @@
   "name": "ao-killbot",
   "version": "1.0.0",
   "description": "Albion Online killboard Discord bot",
-  "main": "ao-killbot.js",
+  "main": "index.js",
   "author": "Mark Arneman",
   "license": "ISC",
   "repository": {
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ao-killbot.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.6.0",
