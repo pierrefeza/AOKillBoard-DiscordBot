@@ -1,11 +1,11 @@
 const axios = require("axios");
 
 class KillFetcher {
-    constructor(discordBot, config) {
-      this.discordBot = discordBot;
-      this.config = config;
-      this.publishedEventIds = [];
-    }
+  constructor(discordBot, config) {
+    this.discordBot = discordBot;
+    this.config = config;
+    this.publishedEventIds = new Set();
+  }
 
   async fetchKills(limit = 51, offset = 0, retries = 3) {
     try {
@@ -38,8 +38,11 @@ class KillFetcher {
   }
 
   parseKills(events) {
+    // Sort events by timestamp before processing
+    events.sort((a, b) => new Date(a.TimeStamp) - new Date(b.TimeStamp));
+
     events.forEach((kill) => {
-      if (this.publishedEventIds.includes(kill.EventId)) return;
+      if (this.publishedEventIds.has(kill.EventId)) return;
 
       if (
         kill.Killer.AllianceName.toLowerCase() === this.config.allianceName.toLowerCase() ||
@@ -51,20 +54,24 @@ class KillFetcher {
       ) {
         console.log(`Posting kill due to alliance/guild/player match: ${kill.EventId}`);
         this.discordBot.queueKill(kill);
-        this.publishedEventIds.push(kill.EventId);
+        this.publishedEventIds.add(kill.EventId);
 
-        if (this.publishedEventIds.length > 10) {
-          this.publishedEventIds.shift();
+        // Trim the set to maintain a maximum of 10 recent unique kills
+        if (this.publishedEventIds.size > 10) {
+          this.publishedEventIds.delete(this.publishedEventIds.values().next().value);
         }
       }
     });
 
-    console.log(`Parsed ${events.length} kills, ${this.publishedEventIds.length} unique kills published recently`);
+    console.log(`Parsed ${events.length} kills, ${this.publishedEventIds.size} unique kills published recently`);
   }
 
   parseDelayedKills(events) {
+    // Sort events by timestamp before processing
+    events.sort((a, b) => new Date(a.TimeStamp) - new Date(b.TimeStamp));
+
     events.forEach((kill) => {
-      if (!this.publishedEventIds.includes(kill.EventId)) {
+      if (!this.publishedEventIds.has(kill.EventId)) {
         if (
           kill.Killer.AllianceName.toLowerCase() === this.config.allianceName.toLowerCase() ||
           kill.Victim.AllianceName.toLowerCase() === this.config.allianceName.toLowerCase() ||
@@ -75,10 +82,11 @@ class KillFetcher {
         ) {
           console.log(`Delayed posting for event ID: ${kill.EventId}`);
           this.discordBot.queueKill(kill);
-          this.publishedEventIds.push(kill.EventId);
+          this.publishedEventIds.add(kill.EventId);
 
-          if (this.publishedEventIds.length > 10) {
-            this.publishedEventIds.shift();
+          // Trim the set to maintain a maximum of 10 recent unique kills
+          if (this.publishedEventIds.size > 10) {
+            this.publishedEventIds.delete(this.publishedEventIds.values().next().value);
           }
         }
       }
