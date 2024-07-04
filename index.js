@@ -8,10 +8,5 @@ const killFetcher = new KillFetcher(discordBot, config);
 discordBot.initialize().then(() => {
   // Initial fetch
   killFetcher.fetchKills();
-
-  // Regular fetch interval (every 30 seconds)
-  setInterval(() => killFetcher.fetchKills(), 2 * 1000);
-
-  // Delayed fetch interval (every 5 minutes)
-  setInterval(() => killFetcher.fetchKillsDelayed(), 5 * 60 * 1000);
+  killFetcher.fetchKillsDelayed();
 });
