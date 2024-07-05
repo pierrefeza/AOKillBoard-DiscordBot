@@ -1,5 +1,5 @@
 # Use the specific Node.js version
-FROM node:16 AS base
+FROM node:16.20.2 AS base
 
 # Install dependencies for canvas
 RUN apt-get update && apt-get install -y \
