@@ -135,22 +135,13 @@ These instructions will get you a copy of the project up and running on your loc
 
 
  11. **Commands to clean docker env***
-   ```sh
-   # Remove unused Docker images
-   docker image prune -a -f
-   
-   # Remove unused Docker containers
-   docker container prune -f
-   
-   # Remove unused Docker volumes
-   docker volume prune -f
-   
-   # Remove unused Docker networks
-   docker network prune -f
-   
-   # Clean up Docker system
-   docker system prune -a -f
-   ```
+      ```sh
+      docker image prune -a -f
+      docker container prune -f
+      docker volume prune -f
+      docker network prune -f
+      docker system prune -a -f
+
 
 ### Built With
 
