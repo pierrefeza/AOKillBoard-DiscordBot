@@ -25,8 +25,8 @@ class ImageGenerator {
     ctx.fillStyle = "#FFF";
     ctx.font = "24px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(formatGuildName(killer.AllianceName, killer.GuildName), 250, 30);
-    ctx.fillText(formatGuildName(victim.AllianceName, victim.GuildName), 950, 30);
+    ctx.fillText(this.formatGuildName(killer.AllianceName, killer.GuildName), 250, 30);
+    ctx.fillText(this.formatGuildName(victim.AllianceName, victim.GuildName), 950, 30);
 
     const timestampIcon = await loadImage(await this.downloadImage("https://render.albiononline.com/v1/spell/SUMMONER_CD_REDUCTION.png"));
     const timestampIconSize = 70;
