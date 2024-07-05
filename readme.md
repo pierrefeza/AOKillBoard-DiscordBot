@@ -133,6 +133,25 @@ These instructions will get you a copy of the project up and running on your loc
     ```sh
     docker logs -f aokillboard-discordbot
 
+
+ 11. **Commands to clean docker env***
+   ```sh
+   # Remove unused Docker images
+   docker image prune -a -f
+   
+   # Remove unused Docker containers
+   docker container prune -f
+   
+   # Remove unused Docker volumes
+   docker volume prune -f
+   
+   # Remove unused Docker networks
+   docker network prune -f
+   
+   # Clean up Docker system
+   docker system prune -a -f
+   ```
+
 ### Built With
 
 * [Discord.js](https://github.com/hydrabolt/discord.js/) - Discord app library for Node.js and browsers.
