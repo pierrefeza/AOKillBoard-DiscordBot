@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Albion Online killboard Discord bot",
   "main": "index.js",
-  "author": "Mark Arneman",
+  "author": "Pierre Donal Feza",
   "license": "ISC",
   "repository": {
     "type": "git",

@@ -1,4 +1,5 @@
-FROM node:latest
+# Use the specific Node.js version
+FROM node:16 AS base
 
 # Install dependencies for canvas
 RUN apt-get update && apt-get install -y \
@@ -6,15 +7,24 @@ RUN apt-get update && apt-get install -y \
     libpango1.0-dev \
     libjpeg-dev \
     libgif-dev \
-    librsvg2-dev
+    librsvg2-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY . /usr/src/app
-
+# Set the working directory
 WORKDIR /usr/src/app
 
-RUN npm install
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies with npm using cache directory
+RUN npm install --prefer-offline --no-audit --cache /tmp/.npm --prefer-offline
+
+# Copy the rest of the application code
+COPY . .
 
 # Rebuild native modules
 RUN npm rebuild canvas
 
+# Command to run the app
 CMD ["npm", "start"]
