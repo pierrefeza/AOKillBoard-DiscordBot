@@ -47,7 +47,7 @@ class ImageGenerator {
 
     // Add group icon if applicable
     if (kill.GroupMembers.length > 1 && kill.GroupMembers.length != kill.Participants.length) {
-      const groupIcon = await loadImage(await this.downloadImage("https://i.imgur.com/c18y0zF.png"));
+      const groupIcon = await loadImage(await this.downloadImage("https://i.imgur.com/josec2F.png"));
       const groupIconSize = 50;
       const groupY = fameY + 110; 
       ctx.drawImage(groupIcon, 570, groupY - groupIconSize + 30, groupIconSize, groupIconSize);
