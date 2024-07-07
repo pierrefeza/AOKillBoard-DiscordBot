@@ -7,6 +7,7 @@ class KillFetcher {
     this.publishedEventIds = new Set(); // Use a Set for efficient storage and lookup
     this.fetchCount = 0; // Counter to track the number of fetches
     this.isFetching = false;
+    this.lastFetchedEventId = null; // To store the ID of the first event of the last fetch
   }
 
   async fetchKills(retryCount = 0) {
@@ -20,6 +21,13 @@ class KillFetcher {
       this.fetchCount++;
       if (this.fetchCount % 10 === 0) {
         console.log(`Fetched ${response.data.length} kills (fetch count: ${this.fetchCount})`);
+      }
+
+      // Check if the first event ID is the same as the last fetched event ID
+      const firstEventId = response.data.length > 0 ? response.data[0].EventId : null;
+      if (firstEventId !== this.lastFetchedEventId) {
+        this.lastFetchedEventId = firstEventId;
+        this.fetchAllOffsets(); // Fetch all offsets if there are new events
       }
 
       // Recursive call with a delay
@@ -45,13 +53,18 @@ class KillFetcher {
         `https://gameinfo.albiononline.com/api/gameinfo/events?limit=51&offset=${offset}`
       );
       const albionEvents = response.data;
-      const foundLatest = !albionEvents.every((evt) => {
+      let foundLatest = false;
+
+      for (const evt of albionEvents) {
         if (!latestEventId) latestEventId = evt.EventId - 1;
-        if (evt.EventId <= latestEventId) return false;
-        if (events.findIndex((e) => e.EventId === evt.EventId) >= 0) return true;
-        events.push(evt);
-        return true;
-      });
+        if (evt.EventId <= latestEventId) {
+          foundLatest = true;
+          break;
+        }
+        if (events.findIndex((e) => e.EventId === evt.EventId) < 0) {
+          events.push(evt);
+        }
+      }
 
       return foundLatest
         ? events
@@ -67,7 +80,7 @@ class KillFetcher {
     if (this.isFetching) return;
     this.isFetching = true;
 
-    const events = await this.fetchEventsTo(null);
+    const events = await this.fetchEventsTo(this.lastFetchedEventId);
     this.parseKills(events);
 
     this.isFetching = false;
