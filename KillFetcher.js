@@ -62,7 +62,7 @@ class KillFetcher {
         if (!latestEventId) latestEventId = evt.EventId - 1;
         if (evt.EventId <= latestEventId) {
           foundLatest = true;
-          console.log(`Found event with ID ${evt.EventId} which is less than or equal to latestEventId ${latestEventId}. Breaking the loop.`);
+          console.log(`Found event with ID ${evt.EventId} which is less than or equal to latestEventId ${latestEventId}. Breaking the loop at offset ${offset}.`);
           break;
         }
         if (events.findIndex((e) => e.EventId === evt.EventId) < 0) {
@@ -91,7 +91,7 @@ class KillFetcher {
     this.isFetching = false;
 
     // Recursive call with a delay
-    setTimeout(() => this.fetchAllOffsets(), 30000); // 3 seconds delay
+    setTimeout(() => this.fetchAllOffsets(), 30000); // 30 seconds delay
   }
 
   parseKills(events) {
