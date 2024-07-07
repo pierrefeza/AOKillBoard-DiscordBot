@@ -91,7 +91,7 @@ class KillFetcher {
     this.isFetching = false;
 
     // Recursive call with a delay
-    setTimeout(() => this.fetchAllOffsets(), 60000); // 60 seconds delay
+    setTimeout(() => this.fetchAllOffsets(), 30000); // 3 seconds delay
   }
 
   parseKills(events) {
