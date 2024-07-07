@@ -7,5 +7,4 @@ const killFetcher = new KillFetcher(discordBot,config);
 discordBot.initialize().then(() => {
   // Initial fetch
   killFetcher.fetchKills();
-  killFetcher.fetchAllOffsets();
 });
