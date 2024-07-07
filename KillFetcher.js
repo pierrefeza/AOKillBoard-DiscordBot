@@ -46,7 +46,10 @@ class KillFetcher {
   }
 
   async fetchEventsTo(latestEventId, offset = 0, events = []) {
-    if (offset >= 1000) return events;
+    if (offset >= 1000) {
+      console.log(`Reached maximum offset of 1000. Total events fetched: ${events.length}`);
+      return events;
+    }
 
     try {
       const response = await axios.get(
@@ -59,6 +62,7 @@ class KillFetcher {
         if (!latestEventId) latestEventId = evt.EventId - 1;
         if (evt.EventId <= latestEventId) {
           foundLatest = true;
+          console.log(`Found event with ID ${evt.EventId} which is less than or equal to latestEventId ${latestEventId}. Breaking the loop.`);
           break;
         }
         if (events.findIndex((e) => e.EventId === evt.EventId) < 0) {
@@ -83,6 +87,7 @@ class KillFetcher {
     const events = await this.fetchEventsTo(this.lastFetchedEventId);
     this.parseKills(events);
 
+    console.log(`Completed fetchAllOffsets. Total events fetched: ${events.length}`);
     this.isFetching = false;
 
     // Recursive call with a delay
