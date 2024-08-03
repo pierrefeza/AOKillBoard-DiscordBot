@@ -31,7 +31,7 @@ class KillFetcher {
       }
 
       // Recursive call with a delay
-      setTimeout(() => this.fetchKills(), 15000); // 15 second delay
+      setTimeout(() => this.fetchKills(), 5000); // 5 second delay
     } catch (error) {
       console.error("Error fetching kills:", error.message);
       if (retryCount < 5) { // Retry up to 5 times
@@ -40,7 +40,7 @@ class KillFetcher {
       } else {
         console.error("Max retries reached for fetchKills");
         // Continue fetching even if max retries reached
-        setTimeout(() => this.fetchKills(), 15000); // 15 second delay
+        setTimeout(() => this.fetchKills(), 5000); // 5 second delay
       }
     }
   }
@@ -91,7 +91,7 @@ class KillFetcher {
     this.isFetching = false;
 
     // Recursive call with a delay
-    setTimeout(() => this.fetchAllOffsets(), 30000); // 30 seconds delay
+    setTimeout(() => this.fetchAllOffsets(), 20000); // 20 seconds delay
   }
 
   parseKills(events) {
